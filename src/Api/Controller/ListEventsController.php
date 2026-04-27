@@ -3,6 +3,7 @@
 namespace Resofire\Picks\Api\Controller;
 
 use Flarum\Http\RequestUtil;
+use Flarum\Settings\SettingsRepositoryInterface;
 use Illuminate\Support\Arr;
 use Laminas\Diactoros\Response\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
@@ -13,7 +14,10 @@ use Resofire\Picks\Team;
 
 class ListEventsController implements RequestHandlerInterface
 {
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function __construct(
+        protected SettingsRepositoryInterface $settings
+    ) {
+    }    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         RequestUtil::getActor($request)->assertCan('picks.manage');
 
@@ -82,6 +86,8 @@ class ListEventsController implements RequestHandlerInterface
             return null;
         }
 
+        $baseUrl = rtrim($this->settings->get('url', ''), '/');
+
         return [
             'id'           => $team->id,
             'name'         => $team->name,
@@ -89,7 +95,7 @@ class ListEventsController implements RequestHandlerInterface
             'conference'   => $team->conference,
             'logo_path'    => $team->logo_path,
             'logo_url'     => $team->logo_path
-                ? url('/assets/' . $team->logo_path)
+                ? $baseUrl . '/' . ltrim($team->logo_path, '/')
                 : null,
         ];
     }

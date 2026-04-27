@@ -6,6 +6,7 @@ use Flarum\Foundation\AbstractServiceProvider;
 use Flarum\Foundation\Paths;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Intervention\Image\ImageManager;
+use Resofire\Picks\Api\Controller\ListEventsController;
 use Resofire\Picks\Service\CfbdService;
 use Resofire\Picks\Service\LogoService;
 use Resofire\Picks\Service\ScheduleSyncService;
@@ -14,6 +15,12 @@ class PicksServiceProvider extends AbstractServiceProvider
 {
     public function register(): void
     {
+        $this->container->singleton(ListEventsController::class, function ($container) {
+            return new ListEventsController(
+                $container->make(SettingsRepositoryInterface::class)
+            );
+        });
+
         $this->container->singleton(CfbdService::class, function ($container) {
             return new CfbdService(
                 $container->make(SettingsRepositoryInterface::class)
