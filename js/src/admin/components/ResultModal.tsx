@@ -94,8 +94,8 @@ export default class ResultModal extends Modal<ResultModalAttrs> {
           <div className="Form-group">
             <Button
               className="Button Button--primary"
-              type="submit"
               loading={this.loading}
+              onclick={() => this.save()}
             >
               {app.translator.trans('resofire-picks.admin.common.save')}
             </Button>
@@ -105,9 +105,7 @@ export default class ResultModal extends Modal<ResultModalAttrs> {
     );
   }
 
-  async onsubmit(e: SubmitEvent) {
-    e.preventDefault();
-
+  async save() {
     if (this.homeScore === '' || this.awayScore === '') return;
 
     this.loading = true;

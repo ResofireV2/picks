@@ -5,7 +5,9 @@ namespace Resofire\Picks;
 use Flarum\Foundation\AbstractServiceProvider;
 use Flarum\Foundation\Paths;
 use Flarum\Settings\SettingsRepositoryInterface;
+use Illuminate\Contracts\Queue\Queue;
 use Intervention\Image\ImageManager;
+use Resofire\Picks\Api\Controller\EnterResultController;
 use Resofire\Picks\Api\Controller\ListEventsController;
 use Resofire\Picks\Service\CfbdService;
 use Resofire\Picks\Service\LogoService;
@@ -15,6 +17,12 @@ class PicksServiceProvider extends AbstractServiceProvider
 {
     public function register(): void
     {
+        $this->container->singleton(EnterResultController::class, function ($container) {
+            return new EnterResultController(
+                $container->make(Queue::class)
+            );
+        });
+
         $this->container->singleton(ListEventsController::class, function ($container) {
             return new ListEventsController(
                 $container->make(SettingsRepositoryInterface::class)

@@ -3,15 +3,22 @@
 namespace Resofire\Picks\Api\Controller;
 
 use Flarum\Http\RequestUtil;
+use Illuminate\Contracts\Queue\Queue;
 use Illuminate\Support\Arr;
 use Laminas\Diactoros\Response\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Resofire\Picks\Jobs\ScorePicksJob;
 use Resofire\Picks\PickEvent;
 
 class EnterResultController implements RequestHandlerInterface
 {
+    public function __construct(
+        protected Queue $queue
+    ) {
+    }
+
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         RequestUtil::getActor($request)->assertCan('picks.manage');
@@ -35,6 +42,9 @@ class EnterResultController implements RequestHandlerInterface
         $event->status     = PickEvent::STATUS_FINISHED;
         $event->result     = $event->calculateResult();
         $event->save();
+
+        // Dispatch scoring job to the queue
+        $this->queue->push(new ScorePicksJob($event->id));
 
         return new JsonResponse([
             'status'     => 'success',
