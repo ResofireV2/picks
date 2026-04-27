@@ -48,10 +48,22 @@ class TeamSyncService
 
         foreach ($apiTeams as $apiTeam) {
             $cfbdId     = Arr::get($apiTeam, 'id');
-            $espnId     = Arr::get($apiTeam, 'espn_id');
             $name       = Arr::get($apiTeam, 'school');
             $abbrev     = Arr::get($apiTeam, 'abbreviation');
             $conference = Arr::get($apiTeam, 'conference');
+
+            // CFBD returns logos as an array of URLs directly.
+            // Index 0 = standard, index 1 = dark variant.
+            $logoUrls    = Arr::get($apiTeam, 'logos', []);
+            $logoUrl     = $logoUrls[0] ?? null;
+            $logoDarkUrl = $logoUrls[1] ?? null;
+
+            // Extract the ESPN ID from the logo URL for storage reference.
+            // e.g. "https://a.espncdn.com/i/teamlogos/ncaa/500/333.png" -> 333
+            $espnId = null;
+            if ($logoUrl && preg_match('/\/(\d+)\.png$/', $logoUrl, $matches)) {
+                $espnId = (int) $matches[1];
+            }
 
             if (! $cfbdId || ! $name) {
                 continue;
@@ -75,7 +87,7 @@ class TeamSyncService
             $team->cfbd_id      = $cfbdId;
 
             if ($espnId) {
-                $team->espn_id = (int) $espnId;
+                $team->espn_id = $espnId;
             }
 
             $team->save();
@@ -86,15 +98,19 @@ class TeamSyncService
                 $updated++;
             }
 
-            // Only download logos when explicitly requested and safe to do so
+            // Download logos when explicitly requested and team doesn't have one yet
             if (
                 $downloadLogos
-                && $espnId
+                && ($logoUrl || $logoDarkUrl)
                 && ! $team->logo_custom
                 && ($isNew || ! $team->logo_path)
             ) {
                 try {
-                    $paths = $this->logoService->downloadAndStore((int) $espnId, $team->slug);
+                    $paths = $this->logoService->downloadFromUrls(
+                        $logoUrl,
+                        $logoDarkUrl,
+                        $team->slug
+                    );
 
                     $dirty = false;
 
@@ -127,23 +143,28 @@ class TeamSyncService
     }
 
     /**
-     * Download logos for all FBS teams that are missing them.
-     * Runs in batches to avoid timeouts. Returns counts of logos saved.
+     * Download logos for FBS teams that are missing them, in batches.
+     * Re-fetches the team list from CFBD to get the logo URLs.
      */
     public function syncLogos(int $batchSize = 20): array
     {
+        // Get teams that need logos, with their ESPN IDs so we can build URLs
         $teams = Team::whereNull('logo_path')
             ->whereNotNull('espn_id')
             ->where('logo_custom', false)
             ->limit($batchSize)
             ->get();
 
-        $saved  = 0;
-        $failed = 0;
+        $saved     = 0;
+        $failed    = 0;
 
         foreach ($teams as $team) {
+            // Reconstruct the ESPN CDN URLs from the stored espn_id
+            $logoUrl     = 'https://a.espncdn.com/i/teamlogos/ncaa/500/' . $team->espn_id . '.png';
+            $logoDarkUrl = 'https://a.espncdn.com/i/teamlogos/ncaa/500-dark/' . $team->espn_id . '.png';
+
             try {
-                $paths = $this->logoService->downloadAndStore($team->espn_id, $team->slug);
+                $paths = $this->logoService->downloadFromUrls($logoUrl, $logoDarkUrl, $team->slug);
 
                 $dirty = false;
 
@@ -185,7 +206,10 @@ class TeamSyncService
             return false;
         }
 
-        $paths = $this->logoService->downloadAndStore($team->espn_id, $team->slug);
+        $logoUrl     = 'https://a.espncdn.com/i/teamlogos/ncaa/500/' . $team->espn_id . '.png';
+        $logoDarkUrl = 'https://a.espncdn.com/i/teamlogos/ncaa/500-dark/' . $team->espn_id . '.png';
+
+        $paths = $this->logoService->downloadFromUrls($logoUrl, $logoDarkUrl, $team->slug);
 
         $saved = false;
 

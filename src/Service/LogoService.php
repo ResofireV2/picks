@@ -22,11 +22,26 @@ class LogoService
     }
 
     /**
-     * Download both standard and dark logos for a team from ESPN CDN,
-     * convert each to WebP, and save under public/assets/picks/logos/.
-     *
-     * Returns array with keys 'logo_path' and 'logo_dark_path'.
-     * Either value may be null if the download or conversion failed.
+     * Download both standard and dark logos using explicit URLs from CFBD.
+     * This is the primary method used during sync since CFBD provides URLs directly.
+     */
+    public function downloadFromUrls(?string $logoUrl, ?string $logoDarkUrl, string $slug): array
+    {
+        $this->ensureDirectoryExists();
+
+        return [
+            'logo_path'      => $logoUrl
+                ? $this->processLogo($logoUrl, $slug, '')
+                : null,
+            'logo_dark_path' => $logoDarkUrl
+                ? $this->processLogo($logoDarkUrl, $slug, '-dark')
+                : null,
+        ];
+    }
+
+    /**
+     * Download both standard and dark logos for a team from ESPN CDN by ID.
+     * Used for individual team logo refresh when only espn_id is available.
      */
     public function downloadAndStore(int $espnId, string $slug): array
     {
