@@ -1,22 +1,60 @@
 resofire-picks:
 
-  ##
-  # Admin interface translations
-  ##
-
   admin:
 
     nav:
       picks: Picks
+      teams: Teams
+      sync: Sync & Settings
+      seasons: Seasons & Weeks
+      games: Games
+      scores: Leaderboard & Scores
+      settings: Picks Settings
+
+    page:
+      description: College football pick'em management
 
     permissions:
       manage: Manage Picks
       make_picks: Make Picks
       view: View Picks
 
-  ##
-  # Shared library translations
-  ##
+    common:
+      save: Save
+      edit: Edit
+      delete: Delete
+      cancel: Cancel
+      last_sync: Last sync
+      coming_soon: This section will be available in a future update.
+
+    teams:
+      edit_title: Edit Team
+      sync_button: Sync Teams
+      search_placeholder: Search teams...
+      all_conferences: All Conferences
+      logo_filter_all: "Logo: All"
+      logo_filter_has: Has Logo
+      logo_filter_missing: Missing Logo
+      logo_filter_custom: Custom Logo
+      total_label: teams
+      no_teams: No teams found.
+      refresh_logo: Re-download logos from ESPN
+      col_logo: Logo
+      col_name: Team
+      col_conference: Conference
+      col_abbrev: Abbrev
+      col_logo_status: Logo Status
+      fields:
+        name: Team Name
+        abbreviation: Abbreviation
+        conference: Conference
+        logo_standard: Standard Logo Path / URL
+        logo_dark: Dark Logo Path / URL
+        logo_custom: Custom Logo (protect from sync)
+        logo_custom_help: When checked, the sync process will never overwrite this team's logos.
+
+    placeholder:
+      coming_soon: This section will be available in a future update.
 
   lib:
 
@@ -25,15 +63,6 @@ resofire-picks:
       matches: Matches
       my_picks: My Picks
       leaderboard: Leaderboard
-      teams: Teams
-      seasons: Seasons
-      weeks: Weeks
-      games: Games
-      settings: Settings
-      sync: Sync & Settings
-      scores: Leaderboard & Scores
-      dashboard: Dashboard
-      picks_settings: Picks Settings
 
     common:
       home: Home

@@ -1,5 +1,8 @@
 import app from 'flarum/admin/app';
+import extenders from './extend';
+
+export { default as extend } from './extend';
 
 app.initializers.add('resofire/picks', () => {
-  // Slice 1 stub — admin UI built in subsequent slices.
+  extenders.forEach((extender) => extender.extend(app));
 });
