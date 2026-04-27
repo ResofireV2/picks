@@ -27,6 +27,7 @@ class EventResource extends AbstractDatabaseResource
 
     public function scope(Builder $query, Context $context): void
     {
+        $query->orderBy('match_date', 'asc');
     }
 
     public function endpoints(): array

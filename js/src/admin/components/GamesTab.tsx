@@ -16,8 +16,8 @@ export default class GamesTab extends Component {
   private filterStatus: string = 'all';
   private search: string = '';
   private offset: number = 0;
-  private limit: number = 25;
-  private total: number = 0;
+  private limit: number = 50;
+  private hasMore: boolean = false;
 
   oninit(vnode: Mithril.Vnode) {
     super.oninit(vnode);
@@ -40,24 +40,19 @@ export default class GamesTab extends Component {
     this.loading = true;
     m.redraw();
 
-    const params: Record<string, any> = {
-      include: 'homeTeam,awayTeam,week',
-      page: { limit: this.limit, offset: this.offset },
-      sort: 'matchDate',
-    };
-
     app.store
-      .find<PickEvent[]>('picks-events', params)
-      .then((results: any) => {
+      .find<PickEvent[]>('picks-events', {
+        include: 'homeTeam,awayTeam,week',
+        page: { limit: this.limit, offset: this.offset },
+      })
+      .then((results) => {
         const incoming = Array.isArray(results) ? results : [];
         if (reset) {
           this.events = incoming;
         } else {
           this.events = [...this.events, ...incoming];
         }
-        // Total comes from the meta if available
-        const payload = (results as any).payload;
-        this.total = payload?.meta?.total ?? this.events.length;
+        this.hasMore = incoming.length >= this.limit;
         this.loading = false;
         m.redraw();
       })
@@ -261,7 +256,7 @@ export default class GamesTab extends Component {
 
             {this.loading && <LoadingIndicator />}
 
-            {!this.loading && this.events.length < this.total && (
+            {!this.loading && this.hasMore && (
               <div className="PicksLoadMore">
                 <Button
                   className="Button"
