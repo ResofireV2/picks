@@ -64,7 +64,7 @@ resofire-picks:
       col_name: Name
 
     games:
-      total_label: games loaded
+      total_label: games
       all_weeks: All Weeks
       all_statuses: All Statuses
       search_placeholder: Search teams...
@@ -72,6 +72,9 @@ resofire-picks:
       enter_result: Enter Result
       result_preview: Result
       load_more: Load More
+      sort_date_asc: Date (Earliest First)
+      sort_date_desc: Date (Latest First)
+      sort_status: Status
       col_home: Home
       col_away: Away
       col_date: Date

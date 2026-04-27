@@ -2,25 +2,36 @@ import app from 'flarum/admin/app';
 import Modal, { IInternalModalAttrs } from 'flarum/common/components/Modal';
 import Button from 'flarum/common/components/Button';
 import type Mithril from 'mithril';
-import PickEvent from '../../common/models/PickEvent';
-import Team from '../../common/models/Team';
+
+interface GameTeam {
+  id: number;
+  name: string;
+}
+
+interface Game {
+  id: number;
+  home_team: GameTeam | null;
+  away_team: GameTeam | null;
+  home_score: number | null;
+  away_score: number | null;
+}
 
 interface ResultModalAttrs extends IInternalModalAttrs {
-  event: PickEvent;
+  game: Game;
   onsave: () => void;
 }
 
 export default class ResultModal extends Modal<ResultModalAttrs> {
-  private event!: PickEvent;
+  private game!: Game;
   private homeScore: string = '';
   private awayScore: string = '';
   private loading: boolean = false;
 
   oninit(vnode: Mithril.Vnode<ResultModalAttrs, this>) {
     super.oninit(vnode);
-    this.event = this.attrs.event;
-    this.homeScore = this.event.homeScore() !== null ? String(this.event.homeScore()) : '';
-    this.awayScore = this.event.awayScore() !== null ? String(this.event.awayScore()) : '';
+    this.game      = this.attrs.game;
+    this.homeScore = this.game.home_score !== null ? String(this.game.home_score) : '';
+    this.awayScore = this.game.away_score !== null ? String(this.game.away_score) : '';
   }
 
   className() {
@@ -32,26 +43,23 @@ export default class ResultModal extends Modal<ResultModalAttrs> {
   }
 
   content() {
-    const homeTeam = this.event.homeTeam() as Team | false;
-    const awayTeam = this.event.awayTeam() as Team | false;
-
     const home = Number(this.homeScore);
     const away = Number(this.awayScore);
     let resultPreview = '';
+
     if (this.homeScore !== '' && this.awayScore !== '') {
-      if (home > away) resultPreview = (homeTeam ? homeTeam.name() : 'Home') + ' wins';
-      else if (away > home) resultPreview = (awayTeam ? awayTeam.name() : 'Away') + ' wins';
+      const homeName = this.game.home_team?.name || 'Home';
+      const awayName = this.game.away_team?.name || 'Away';
+      if (home > away) resultPreview = homeName + ' wins';
+      else if (away > home) resultPreview = awayName + ' wins';
       else resultPreview = 'Tied — college football cannot end in a tie. Please check scores.';
     }
 
     return (
       <div className="Modal-body">
         <div className="Form">
-
           <div className="Form-group">
-            <label>
-              {homeTeam ? homeTeam.name() : 'Home Team'} (Home)
-            </label>
+            <label>{this.game.home_team?.name ?? 'Home Team'} (Home)</label>
             <input
               className="FormControl"
               type="number"
@@ -63,9 +71,7 @@ export default class ResultModal extends Modal<ResultModalAttrs> {
           </div>
 
           <div className="Form-group">
-            <label>
-              {awayTeam ? awayTeam.name() : 'Away Team'} (Away)
-            </label>
+            <label>{this.game.away_team?.name ?? 'Away Team'} (Away)</label>
             <input
               className="FormControl"
               type="number"
@@ -102,9 +108,7 @@ export default class ResultModal extends Modal<ResultModalAttrs> {
   async onsubmit(e: SubmitEvent) {
     e.preventDefault();
 
-    if (this.homeScore === '' || this.awayScore === '') {
-      return;
-    }
+    if (this.homeScore === '' || this.awayScore === '') return;
 
     this.loading = true;
     m.redraw();
@@ -112,7 +116,7 @@ export default class ResultModal extends Modal<ResultModalAttrs> {
     try {
       await app.request({
         method: 'POST',
-        url: `${app.forum.attribute('apiUrl')}/picks/events/${this.event.id()}/result`,
+        url: `${app.forum.attribute('apiUrl')}/picks/events/${this.game.id}/result`,
         body: {
           homeScore: parseInt(this.homeScore),
           awayScore: parseInt(this.awayScore),

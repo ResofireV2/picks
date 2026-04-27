@@ -3,91 +3,101 @@ import Component from 'flarum/common/Component';
 import Button from 'flarum/common/components/Button';
 import LoadingIndicator from 'flarum/common/components/LoadingIndicator';
 import type Mithril from 'mithril';
-import PickEvent from '../../common/models/PickEvent';
-import Team from '../../common/models/Team';
 import Week from '../../common/models/Week';
-import Season from '../../common/models/Season';
 import ResultModal from './ResultModal';
 
+interface GameTeam {
+  id: number;
+  name: string;
+  abbreviation: string | null;
+  conference: string | null;
+  logo_path: string | null;
+  logo_url: string | null;
+}
+
+interface Game {
+  id: number;
+  cfbd_id: number | null;
+  week_id: number | null;
+  week_name: string | null;
+  status: string;
+  match_date: string | null;
+  cutoff_date: string | null;
+  neutral_site: boolean;
+  home_score: number | null;
+  away_score: number | null;
+  result: string | null;
+  home_team: GameTeam | null;
+  away_team: GameTeam | null;
+}
+
+interface GamesMeta {
+  total: number;
+  current_page: number;
+  per_page: number;
+  last_page: number;
+}
+
 export default class GamesTab extends Component {
-  private events: PickEvent[] = [];
+  private games: Game[] = [];
+  private meta: GamesMeta | null = null;
   private loading: boolean = false;
-  private filterWeekId: string = 'all';
-  private filterStatus: string = 'all';
+  private page: number = 1;
+  private filterWeekId: string = '';
+  private filterStatus: string = '';
   private search: string = '';
-  private offset: number = 0;
-  private limit: number = 50;
-  private hasMore: boolean = false;
+  private sort: string = 'date_asc';
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   oninit(vnode: Mithril.Vnode) {
     super.oninit(vnode);
 
-    // Pre-select the first week if weeks are available
-    const weeks = app.store.all<Week>('picks-weeks');
+    // Pre-select the first week
+    const weeks = app.store.all<Week>('picks-weeks').sort((a, b) => {
+      if (a.seasonType() !== b.seasonType()) return a.seasonType() === 'regular' ? -1 : 1;
+      return (a.weekNumber() || 0) - (b.weekNumber() || 0);
+    });
     if (weeks.length > 0) {
       this.filterWeekId = String(weeks[0].id());
     }
 
-    this.loadEvents(true);
+    this.load(1);
   }
 
-  private loadEvents(reset: boolean = false) {
-    if (reset) {
-      this.offset = 0;
-      this.events = [];
-    }
-
+  private load(page: number) {
     this.loading = true;
+    this.page = page;
     m.redraw();
 
-    app.store
-      .find<PickEvent[]>('picks-events', {
-        include: 'homeTeam,awayTeam,week',
-        page: { limit: this.limit, offset: this.offset },
-      })
-      .then((results) => {
-        const incoming = Array.isArray(results) ? results : [];
-        if (reset) {
-          this.events = incoming;
-        } else {
-          this.events = [...this.events, ...incoming];
-        }
-        this.hasMore = incoming.length >= this.limit;
-        this.loading = false;
-        m.redraw();
-      })
-      .catch(() => {
-        this.loading = false;
-        m.redraw();
-      });
-  }
+    const params: Record<string, any> = {
+      page: this.page,
+      per_page: 50,
+      sort: this.sort,
+    };
 
-  private loadMore() {
-    this.offset += this.limit;
-    this.loadEvents(false);
-  }
+    if (this.filterWeekId) params.week_id = this.filterWeekId;
+    if (this.filterStatus)  params.status  = this.filterStatus;
+    if (this.search)        params.search  = this.search;
 
-  private filteredEvents(): PickEvent[] {
-    return this.events.filter((event) => {
-      if (this.filterWeekId !== 'all') {
-        if (String(event.weekId()) !== this.filterWeekId) return false;
-      }
-
-      if (this.filterStatus !== 'all') {
-        if (event.status() !== this.filterStatus) return false;
-      }
-
-      if (this.search) {
-        const q = this.search.toLowerCase();
-        const home = event.homeTeam();
-        const away = event.awayTeam();
-        const homeName = (home ? (home as Team).name() : '').toLowerCase();
-        const awayName = (away ? (away as Team).name() : '').toLowerCase();
-        if (!homeName.includes(q) && !awayName.includes(q)) return false;
-      }
-
-      return true;
+    app.request<{ data: Game[]; meta: GamesMeta }>({
+      method: 'GET',
+      url: app.forum.attribute('apiUrl') + '/picks/events',
+      params,
+    }).then((r) => {
+      this.games   = r.data || [];
+      this.meta    = r.meta || null;
+      this.loading = false;
+      m.redraw();
+    }).catch(() => {
+      this.loading = false;
+      m.redraw();
     });
+  }
+
+  private onSearchInput(value: string) {
+    this.search = value;
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => this.load(1), 300);
   }
 
   private statusBadge(status: string): Mithril.Children {
@@ -103,17 +113,16 @@ export default class GamesTab extends Component {
     );
   }
 
-  private renderTeamLogo(team: Team | false): Mithril.Children {
-    if (!team) return <div className="PicksTeamLogo PicksTeamLogo--placeholder">?</div>;
+  private renderTeamLogo(team: GameTeam | null): Mithril.Children {
+    if (!team) return <div className="PicksTeamLogo PicksTeamLogo--placeholder PicksTeamLogo--small">?</div>;
 
-    const logoUrl = team.logoUrl();
-    if (logoUrl) {
-      return <img src={logoUrl} alt={team.name() || ''} className="PicksTeamLogo PicksTeamLogo--small" />;
+    if (team.logo_url) {
+      return <img src={team.logo_url} alt={team.name} className="PicksTeamLogo PicksTeamLogo--small" />;
     }
 
     return (
       <div className="PicksTeamLogo PicksTeamLogo--placeholder PicksTeamLogo--small">
-        {(team.abbreviation() || team.name() || '?').charAt(0)}
+        {(team.abbreviation || team.name || '?').charAt(0)}
       </div>
     );
   }
@@ -130,11 +139,13 @@ export default class GamesTab extends Component {
   }
 
   view() {
-    const weeks   = app.store.all<Week>('picks-weeks').sort((a, b) => {
+    const weeks = app.store.all<Week>('picks-weeks').sort((a, b) => {
       if (a.seasonType() !== b.seasonType()) return a.seasonType() === 'regular' ? -1 : 1;
       return (a.weekNumber() || 0) - (b.weekNumber() || 0);
     });
-    const filtered = this.filteredEvents();
+
+    const total     = this.meta?.total ?? 0;
+    const lastPage  = this.meta?.last_page ?? 1;
 
     return (
       <div className="PicksGamesTab">
@@ -145,7 +156,7 @@ export default class GamesTab extends Component {
               {' '}{app.translator.trans('resofire-picks.admin.nav.games')}
             </h3>
             <p className="PicksTab-meta">
-              {this.events.length} {app.translator.trans('resofire-picks.admin.games.total_label')}
+              {total} {app.translator.trans('resofire-picks.admin.games.total_label')}
             </p>
           </div>
         </div>
@@ -156,9 +167,10 @@ export default class GamesTab extends Component {
             value={this.filterWeekId}
             onchange={(e: Event) => {
               this.filterWeekId = (e.target as HTMLSelectElement).value;
+              this.load(1);
             }}
           >
-            <option value="all">{app.translator.trans('resofire-picks.admin.games.all_weeks')}</option>
+            <option value="">{app.translator.trans('resofire-picks.admin.games.all_weeks')}</option>
             {weeks.map(w => (
               <option key={String(w.id())} value={String(w.id())}>
                 {w.name()}
@@ -171,12 +183,26 @@ export default class GamesTab extends Component {
             value={this.filterStatus}
             onchange={(e: Event) => {
               this.filterStatus = (e.target as HTMLSelectElement).value;
+              this.load(1);
             }}
           >
-            <option value="all">{app.translator.trans('resofire-picks.admin.games.all_statuses')}</option>
+            <option value="">{app.translator.trans('resofire-picks.admin.games.all_statuses')}</option>
             <option value="scheduled">{app.translator.trans('resofire-picks.lib.status.scheduled')}</option>
             <option value="closed">{app.translator.trans('resofire-picks.lib.status.closed')}</option>
             <option value="finished">{app.translator.trans('resofire-picks.lib.status.finished')}</option>
+          </select>
+
+          <select
+            className="FormControl"
+            value={this.sort}
+            onchange={(e: Event) => {
+              this.sort = (e.target as HTMLSelectElement).value;
+              this.load(1);
+            }}
+          >
+            <option value="date_asc">{app.translator.trans('resofire-picks.admin.games.sort_date_asc')}</option>
+            <option value="date_desc">{app.translator.trans('resofire-picks.admin.games.sort_date_desc')}</option>
+            <option value="status">{app.translator.trans('resofire-picks.admin.games.sort_status')}</option>
           </select>
 
           <input
@@ -184,13 +210,13 @@ export default class GamesTab extends Component {
             type="text"
             placeholder={app.translator.trans('resofire-picks.admin.games.search_placeholder')}
             value={this.search}
-            oninput={(e: InputEvent) => { this.search = (e.target as HTMLInputElement).value; }}
+            oninput={(e: InputEvent) => this.onSearchInput((e.target as HTMLInputElement).value)}
           />
         </div>
 
-        {this.loading && this.events.length === 0 ? (
+        {this.loading ? (
           <LoadingIndicator />
-        ) : filtered.length === 0 ? (
+        ) : this.games.length === 0 ? (
           <div className="PicksEmptyState">
             {app.translator.trans('resofire-picks.admin.games.no_games')}
           </div>
@@ -206,63 +232,67 @@ export default class GamesTab extends Component {
                 <div></div>
               </div>
 
-              {filtered.map((event) => {
-                const homeTeam = event.homeTeam() as Team | false;
-                const awayTeam = event.awayTeam() as Team | false;
-
-                return (
-                  <div key={String(event.id())} className="PicksCardList-row PicksCardList-row--games">
-                    <div className="PicksCardList-cell PicksTeamCell">
-                      {this.renderTeamLogo(homeTeam)}
-                      <span>{homeTeam ? homeTeam.name() : '—'}</span>
-                    </div>
-
-                    <div className="PicksCardList-cell PicksTeamCell">
-                      {this.renderTeamLogo(awayTeam)}
-                      <span>{awayTeam ? awayTeam.name() : '—'}</span>
-                    </div>
-
-                    <div className="PicksCardList-cell PicksCardList-cell--muted">
-                      {this.formatDate(event.matchDate())}
-                    </div>
-
-                    <div className="PicksCardList-cell">
-                      {this.statusBadge(event.status() || 'scheduled')}
-                    </div>
-
-                    <div className="PicksCardList-cell">
-                      {event.homeScore() !== null && event.awayScore() !== null
-                        ? `${event.homeScore()} – ${event.awayScore()}`
-                        : '—'}
-                    </div>
-
-                    <div className="PicksCardList-cell PicksCardList-cell--actions">
-                      <Button
-                        className="Button Button--primary Button--icon"
-                        icon="fas fa-check"
-                        title={app.translator.trans('resofire-picks.admin.games.enter_result')}
-                        onclick={() =>
-                          app.modal.show(ResultModal, {
-                            event,
-                            onsave: () => this.loadEvents(true),
-                          })
-                        }
-                      />
-                    </div>
+              {this.games.map((game) => (
+                <div key={String(game.id)} className="PicksCardList-row PicksCardList-row--games">
+                  <div className="PicksCardList-cell PicksTeamCell">
+                    {this.renderTeamLogo(game.home_team)}
+                    <span>{game.home_team?.name ?? '—'}</span>
                   </div>
-                );
-              })}
+
+                  <div className="PicksCardList-cell PicksTeamCell">
+                    {this.renderTeamLogo(game.away_team)}
+                    <span>{game.away_team?.name ?? '—'}</span>
+                  </div>
+
+                  <div className="PicksCardList-cell PicksCardList-cell--muted">
+                    {this.formatDate(game.match_date)}
+                  </div>
+
+                  <div className="PicksCardList-cell">
+                    {this.statusBadge(game.status)}
+                  </div>
+
+                  <div className="PicksCardList-cell">
+                    {game.home_score !== null && game.away_score !== null
+                      ? `${game.home_score} – ${game.away_score}`
+                      : '—'}
+                  </div>
+
+                  <div className="PicksCardList-cell PicksCardList-cell--actions">
+                    <Button
+                      className="Button Button--primary Button--icon"
+                      icon="fas fa-check"
+                      title={app.translator.trans('resofire-picks.admin.games.enter_result')}
+                      onclick={() =>
+                        app.modal.show(ResultModal, {
+                          game,
+                          onsave: () => this.load(this.page),
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
 
-            {this.loading && <LoadingIndicator />}
-
-            {!this.loading && this.hasMore && (
-              <div className="PicksLoadMore">
+            {lastPage > 1 && (
+              <div className="PicksPagination">
                 <Button
                   className="Button"
-                  onclick={() => this.loadMore()}
+                  disabled={this.page <= 1}
+                  onclick={() => this.load(this.page - 1)}
                 >
-                  {app.translator.trans('resofire-picks.admin.games.load_more')}
+                  ← Prev
+                </Button>
+                <span className="PicksPagination-info">
+                  Page {this.page} of {lastPage}
+                </span>
+                <Button
+                  className="Button"
+                  disabled={this.page >= lastPage}
+                  onclick={() => this.load(this.page + 1)}
+                >
+                  Next →
                 </Button>
               </div>
             )}

@@ -4,6 +4,7 @@ namespace Resofire\Picks;
 
 use Flarum\Extend;
 use Resofire\Picks\Api\Controller\EnterResultController;
+use Resofire\Picks\Api\Controller\ListEventsController;
 use Resofire\Picks\Api\Controller\RefreshTeamLogoController;
 use Resofire\Picks\Api\Controller\SyncLogosController;
 use Resofire\Picks\Api\Controller\SyncScheduleController;
@@ -71,6 +72,7 @@ return [
     // Custom API routes (non-resource actions)
     // -------------------------------------------------------------------------
     (new Extend\Routes('api'))
+        ->get('/picks/events', 'picks.events.index', ListEventsController::class)
         ->post('/picks/sync/teams', 'picks.sync.teams', SyncTeamsController::class)
         ->post('/picks/sync/logos', 'picks.sync.logos', SyncLogosController::class)
         ->post('/picks/sync/schedule', 'picks.sync.schedule', SyncScheduleController::class)
