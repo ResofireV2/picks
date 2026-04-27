@@ -94,3 +94,12 @@ resofire-picks:
       deleted: Deleted successfully.
       delete_confirm: Are you sure?
       login_required: Please log in to participate.
+
+    seasons:
+      sync_button: Sync Schedule
+      seasons_label: seasons
+      no_weeks: No weeks found. Click Sync Schedule to import.
+      col_week: Week
+      col_type: Type
+      col_dates: Dates
+      col_name: Name

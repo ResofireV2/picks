@@ -1,10 +1,14 @@
 import Extend from 'flarum/common/extenders';
 import app from 'flarum/admin/app';
 import Team from '../common/models/Team';
+import Season from '../common/models/Season';
+import Week from '../common/models/Week';
 import PicksPage from './components/PicksPage';
 
 export default [
   new Extend.Store().add('picks-teams', Team),
+  new Extend.Store().add('picks-seasons', Season),
+  new Extend.Store().add('picks-weeks', Week),
 
   new Extend.Admin()
     .page(PicksPage)

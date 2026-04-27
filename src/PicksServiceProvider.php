@@ -8,6 +8,7 @@ use Flarum\Settings\SettingsRepositoryInterface;
 use Intervention\Image\ImageManager;
 use Resofire\Picks\Service\CfbdService;
 use Resofire\Picks\Service\LogoService;
+use Resofire\Picks\Service\ScheduleSyncService;
 use Resofire\Picks\Service\TeamSyncService;
 class PicksServiceProvider extends AbstractServiceProvider
 {
@@ -31,6 +32,13 @@ class PicksServiceProvider extends AbstractServiceProvider
             return new TeamSyncService(
                 $container->make(CfbdService::class),
                 $container->make(LogoService::class),
+                $container->make(SettingsRepositoryInterface::class)
+            );
+        });
+
+        $this->container->singleton(ScheduleSyncService::class, function ($container) {
+            return new ScheduleSyncService(
+                $container->make(CfbdService::class),
                 $container->make(SettingsRepositoryInterface::class)
             );
         });

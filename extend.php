@@ -5,8 +5,12 @@ namespace Resofire\Picks;
 use Flarum\Extend;
 use Resofire\Picks\Api\Controller\RefreshTeamLogoController;
 use Resofire\Picks\Api\Controller\SyncLogosController;
+use Resofire\Picks\Api\Controller\SyncScheduleController;
 use Resofire\Picks\Api\Controller\SyncTeamsController;
+use Resofire\Picks\Api\Resource\EventResource;
+use Resofire\Picks\Api\Resource\SeasonResource;
 use Resofire\Picks\Api\Resource\TeamResource;
+use Resofire\Picks\Api\Resource\WeekResource;
 use Resofire\Picks\Console\SyncTeamsCommand;
 use Resofire\Picks\PicksServiceProvider;
 
@@ -58,6 +62,9 @@ return [
     // API Resources
     // -------------------------------------------------------------------------
     new Extend\ApiResource(TeamResource::class),
+    new Extend\ApiResource(SeasonResource::class),
+    new Extend\ApiResource(WeekResource::class),
+    new Extend\ApiResource(EventResource::class),
 
     // -------------------------------------------------------------------------
     // Custom API routes (non-resource actions)
@@ -65,6 +72,7 @@ return [
     (new Extend\Routes('api'))
         ->post('/picks/sync/teams', 'picks.sync.teams', SyncTeamsController::class)
         ->post('/picks/sync/logos', 'picks.sync.logos', SyncLogosController::class)
+        ->post('/picks/sync/schedule', 'picks.sync.schedule', SyncScheduleController::class)
         ->post('/picks/teams/{id}/refresh-logo', 'picks.teams.refresh-logo', RefreshTeamLogoController::class),
 
     // Note: No separate admin frontend route needed — PicksPage extends
