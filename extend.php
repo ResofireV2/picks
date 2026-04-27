@@ -7,8 +7,15 @@ use Resofire\Picks\Api\Controller\RefreshTeamLogoController;
 use Resofire\Picks\Api\Controller\SyncTeamsController;
 use Resofire\Picks\Api\Resource\TeamResource;
 use Resofire\Picks\Console\SyncTeamsCommand;
+use Resofire\Picks\PicksServiceProvider;
 
 return [
+    // -------------------------------------------------------------------------
+    // Service provider — binds services with explicit dependencies
+    // -------------------------------------------------------------------------
+    (new Extend\ServiceProvider())
+        ->register(PicksServiceProvider::class),
+
     // -------------------------------------------------------------------------
     // Frontend assets
     // -------------------------------------------------------------------------

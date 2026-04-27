@@ -3,30 +3,20 @@
 namespace Resofire\Picks\Service;
 
 use Flarum\Settings\SettingsRepositoryInterface;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
-use Illuminate\Support\Arr;
 use RuntimeException;
 
 class CfbdService
 {
     protected const BASE_URL = 'https://api.collegefootballdata.com';
-
-    private Client $client;
+    protected const TIMEOUT  = 30;
 
     public function __construct(
         protected SettingsRepositoryInterface $settings
     ) {
-        $this->client = new Client([
-            'base_uri' => self::BASE_URL,
-            'timeout'  => 30,
-        ]);
     }
 
     /**
      * Fetch all FBS teams, optionally filtered by conference.
-     *
-     * Returns an array of team data arrays from the CFBD API.
      *
      * @throws RuntimeException
      */
@@ -45,31 +35,11 @@ class CfbdService
             $params['conference'] = $conferenceFilter;
         }
 
-        try {
-            $response = $this->client->get('/teams', [
-                'headers' => $this->buildHeaders($apiKey),
-                'query'   => $params,
-            ]);
-        } catch (GuzzleException $e) {
-            throw new RuntimeException('CFBD API request failed: ' . $e->getMessage(), 0, $e);
-        }
-
-        $body = json_decode((string) $response->getBody(), true);
-
-        if (! is_array($body)) {
-            throw new RuntimeException('CFBD API returned unexpected response for /teams.');
-        }
-
-        return $body;
+        return $this->request('/teams', $params, $apiKey);
     }
 
     /**
-     * Fetch the game schedule for a given year, season type, and optional week.
-     *
-     * @param int         $year
-     * @param string      $seasonType  'regular' or 'postseason'
-     * @param int|null    $week
-     * @param string|null $conference
+     * Fetch games for a given year and season type.
      *
      * @throws RuntimeException
      */
@@ -82,9 +52,9 @@ class CfbdService
         }
 
         $params = [
-            'year'            => $year,
-            'seasonType'      => $seasonType,
-            'classification'  => 'fbs',
+            'year'           => $year,
+            'seasonType'     => $seasonType,
+            'classification' => 'fbs',
         ];
 
         if ($week !== null) {
@@ -95,26 +65,11 @@ class CfbdService
             $params['conference'] = $conference;
         }
 
-        try {
-            $response = $this->client->get('/games', [
-                'headers' => $this->buildHeaders($apiKey),
-                'query'   => $params,
-            ]);
-        } catch (GuzzleException $e) {
-            throw new RuntimeException('CFBD API request failed: ' . $e->getMessage(), 0, $e);
-        }
-
-        $body = json_decode((string) $response->getBody(), true);
-
-        if (! is_array($body)) {
-            throw new RuntimeException('CFBD API returned unexpected response for /games.');
-        }
-
-        return $body;
+        return $this->request('/games', $params, $apiKey);
     }
 
     /**
-     * Fetch the weeks available for a given year and season type.
+     * Fetch the season calendar (week definitions) for a given year.
      *
      * @throws RuntimeException
      */
@@ -126,29 +81,53 @@ class CfbdService
             throw new RuntimeException('CFBD API key is not configured.');
         }
 
-        try {
-            $response = $this->client->get('/calendar', [
-                'headers' => $this->buildHeaders($apiKey),
-                'query'   => ['year' => $year],
-            ]);
-        } catch (GuzzleException $e) {
-            throw new RuntimeException('CFBD API request failed: ' . $e->getMessage(), 0, $e);
-        }
-
-        $body = json_decode((string) $response->getBody(), true);
-
-        if (! is_array($body)) {
-            throw new RuntimeException('CFBD API returned unexpected response for /calendar.');
-        }
-
-        return $body;
+        return $this->request('/calendar', ['year' => $year], $apiKey);
     }
 
-    private function buildHeaders(string $apiKey): array
+    /**
+     * Make a GET request to the CFBD API using curl.
+     *
+     * @throws RuntimeException
+     */
+    private function request(string $endpoint, array $params, string $apiKey): array
     {
-        return [
-            'Authorization' => 'Bearer ' . $apiKey,
-            'Accept'        => 'application/json',
-        ];
+        $url = self::BASE_URL . $endpoint;
+
+        if (!empty($params)) {
+            $url .= '?' . http_build_query($params);
+        }
+
+        $ch = curl_init($url);
+
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPGET        => true,
+            CURLOPT_HTTPHEADER     => [
+                'Authorization: Bearer ' . $apiKey,
+                'Accept: application/json',
+            ],
+            CURLOPT_TIMEOUT        => self::TIMEOUT,
+        ]);
+
+        $response  = curl_exec($ch);
+        $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        if ($curlError) {
+            throw new RuntimeException('CFBD request failed: ' . $curlError);
+        }
+
+        if ($httpCode !== 200) {
+            throw new RuntimeException('CFBD API returned HTTP ' . $httpCode . ' for ' . $endpoint);
+        }
+
+        $decoded = json_decode($response, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new RuntimeException('CFBD response was not valid JSON.');
+        }
+
+        return $decoded ?? [];
     }
 }
