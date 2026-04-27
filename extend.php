@@ -4,6 +4,7 @@ namespace Resofire\Picks;
 
 use Flarum\Extend;
 use Resofire\Picks\Api\Controller\RefreshTeamLogoController;
+use Resofire\Picks\Api\Controller\SyncLogosController;
 use Resofire\Picks\Api\Controller\SyncTeamsController;
 use Resofire\Picks\Api\Resource\TeamResource;
 use Resofire\Picks\Console\SyncTeamsCommand;
@@ -63,7 +64,12 @@ return [
     // -------------------------------------------------------------------------
     (new Extend\Routes('api'))
         ->post('/picks/sync/teams', 'picks.sync.teams', SyncTeamsController::class)
+        ->post('/picks/sync/logos', 'picks.sync.logos', SyncLogosController::class)
         ->post('/picks/teams/{id}/refresh-logo', 'picks.teams.refresh-logo', RefreshTeamLogoController::class),
+
+    // Note: No separate admin frontend route needed — PicksPage extends
+    // ExtensionPage and is registered via Extend\Admin().page(), so it
+    // renders directly in the admin dashboard extension card.
 
     // -------------------------------------------------------------------------
     // Console commands

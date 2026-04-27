@@ -30,6 +30,7 @@ resofire-picks:
     teams:
       edit_title: Edit Team
       sync_button: Sync Teams
+      sync_logos_button: Sync Logos
       search_placeholder: Search teams...
       all_conferences: All Conferences
       logo_filter_all: "Logo: All"

@@ -2,6 +2,7 @@
 
 namespace Resofire\Picks\Service;
 
+use Carbon\Carbon;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -9,6 +10,13 @@ use Resofire\Picks\Team;
 
 class TeamSyncService
 {
+    /**
+     * Valid FBS conference abbreviations used to filter teams returned by CFBD.
+     * The /teams endpoint does not support server-side classification filtering,
+     * so we filter client-side by checking the classification field on each team.
+     */
+    protected const FBS_CLASSIFICATION = 'fbs';
+
     public function __construct(
         protected CfbdService $cfbd,
         protected LogoService $logoService,
@@ -17,28 +25,32 @@ class TeamSyncService
     }
 
     /**
-     * Sync all FBS teams from CFBD into the picks_teams table.
+     * Sync FBS teams from CFBD into the picks_teams table.
      *
-     * - Creates new teams that don't exist yet.
-     * - Updates existing teams (name, abbreviation, conference, ESPN ID, CFBD ID).
-     * - Downloads logos for teams that don't have a custom logo set.
-     *
-     * Returns a summary array with counts.
+     * Logo downloads are done in a separate pass to keep the sync fast and
+     * avoid PHP execution timeout on large datasets. Pass $downloadLogos = true
+     * to also download logos in the same request (only safe for small batches).
      */
-    public function sync(): array
+    public function sync(bool $downloadLogos = false): array
     {
         $apiTeams = $this->cfbd->fetchTeams();
 
-        $created  = 0;
-        $updated  = 0;
-        $logos    = 0;
-        $errors   = [];
+        // Filter to FBS only — CFBD /teams returns all classifications
+        $apiTeams = array_filter($apiTeams, function (array $team) {
+            $classification = strtolower((string) Arr::get($team, 'classification', ''));
+            return $classification === self::FBS_CLASSIFICATION;
+        });
+
+        $created = 0;
+        $updated = 0;
+        $logos   = 0;
+        $errors  = [];
 
         foreach ($apiTeams as $apiTeam) {
-            $cfbdId    = Arr::get($apiTeam, 'id');
-            $espnId    = Arr::get($apiTeam, 'espn_id');
-            $name      = Arr::get($apiTeam, 'school');
-            $abbrev    = Arr::get($apiTeam, 'abbreviation');
+            $cfbdId     = Arr::get($apiTeam, 'id');
+            $espnId     = Arr::get($apiTeam, 'espn_id');
+            $name       = Arr::get($apiTeam, 'school');
+            $abbrev     = Arr::get($apiTeam, 'abbreviation');
             $conference = Arr::get($apiTeam, 'conference');
 
             if (! $cfbdId || ! $name) {
@@ -47,14 +59,13 @@ class TeamSyncService
 
             $slug = Str::slug($name);
 
-            // Find existing team by CFBD ID first, then fall back to slug.
             $team = Team::where('cfbd_id', $cfbdId)->first()
                 ?? Team::where('slug', $slug)->first();
 
             $isNew = $team === null;
 
             if ($isNew) {
-                $team = new Team();
+                $team       = new Team();
                 $team->slug = $slug;
             }
 
@@ -75,12 +86,10 @@ class TeamSyncService
                 $updated++;
             }
 
-            // Download logos only if:
-            // - The team has an ESPN ID
-            // - The team does not have a custom logo
-            // - Either it's a new team, or it has no logo yet
+            // Only download logos when explicitly requested and safe to do so
             if (
-                $espnId
+                $downloadLogos
+                && $espnId
                 && ! $team->logo_custom
                 && ($isNew || ! $team->logo_path)
             ) {
@@ -111,25 +120,68 @@ class TeamSyncService
 
         $this->settings->set(
             'resofire-picks.last_teams_sync',
-            now()->toIso8601String()
+            Carbon::now()->toIso8601String()
         );
 
         return compact('created', 'updated', 'logos', 'errors');
     }
 
     /**
-     * Re-download logos for a single team by its local ID.
-     * Respects the logo_custom flag.
-     *
-     * Returns true if at least the standard logo was saved.
+     * Download logos for all FBS teams that are missing them.
+     * Runs in batches to avoid timeouts. Returns counts of logos saved.
+     */
+    public function syncLogos(int $batchSize = 20): array
+    {
+        $teams = Team::whereNull('logo_path')
+            ->whereNotNull('espn_id')
+            ->where('logo_custom', false)
+            ->limit($batchSize)
+            ->get();
+
+        $saved  = 0;
+        $failed = 0;
+
+        foreach ($teams as $team) {
+            try {
+                $paths = $this->logoService->downloadAndStore($team->espn_id, $team->slug);
+
+                $dirty = false;
+
+                if ($paths['logo_path'] !== null) {
+                    $team->logo_path = $paths['logo_path'];
+                    $dirty = true;
+                }
+
+                if ($paths['logo_dark_path'] !== null) {
+                    $team->logo_dark_path = $paths['logo_dark_path'];
+                    $dirty = true;
+                }
+
+                if ($dirty) {
+                    $team->save();
+                    $saved++;
+                } else {
+                    $failed++;
+                }
+            } catch (\Throwable $e) {
+                $failed++;
+            }
+        }
+
+        $remaining = Team::whereNull('logo_path')
+            ->whereNotNull('espn_id')
+            ->where('logo_custom', false)
+            ->count();
+
+        return compact('saved', 'failed', 'remaining');
+    }
+
+    /**
+     * Re-download logos for a single team. Respects logo_custom flag.
      */
     public function refreshLogos(Team $team): bool
     {
-        if ($team->logo_custom) {
-            return false;
-        }
-
-        if (! $team->espn_id) {
+        if ($team->logo_custom || ! $team->espn_id) {
             return false;
         }
 

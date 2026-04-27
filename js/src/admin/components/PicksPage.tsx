@@ -1,35 +1,25 @@
 import app from 'flarum/admin/app';
-import AdminPage, { AdminHeaderAttrs } from 'flarum/admin/components/AdminPage';
-import type { IPageAttrs } from 'flarum/common/components/Page';
+import ExtensionPage from 'flarum/admin/components/ExtensionPage';
+import type { ExtensionPageAttrs } from 'flarum/admin/components/ExtensionPage';
 import type Mithril from 'mithril';
 import TeamsTab from './TeamsTab';
 
-export default class PicksPage extends AdminPage {
+export default class PicksPage extends ExtensionPage {
   private activeTab: string = 'teams';
 
-  oninit(vnode: Mithril.Vnode<IPageAttrs, this>) {
+  oninit(vnode: Mithril.Vnode<ExtensionPageAttrs, this>) {
     super.oninit(vnode);
 
-    // Restore tab from URL query param if present.
     const param = m.route.param('tab');
-    const validTabs = ['dashboard', 'sync', 'seasons', 'teams', 'games', 'scores', 'settings'];
+    const validTabs = ['teams', 'sync', 'seasons', 'games', 'scores', 'settings'];
     if (param && validTabs.includes(param)) {
       this.activeTab = param;
     }
   }
 
-  headerInfo(): AdminHeaderAttrs {
-    return {
-      className: 'PicksAdminPage',
-      icon: 'fas fa-football',
-      title: app.translator.trans('resofire-picks.admin.nav.picks'),
-      description: app.translator.trans('resofire-picks.admin.page.description'),
-    };
-  }
-
   content(): Mithril.Children {
     return (
-      <div className="PicksAdminPage-body">
+      <div className="PicksAdminPage">
         <div className="PicksAdminPage-tabs">
           {this.renderTab('teams',    'fas fa-users',        'resofire-picks.admin.nav.teams')}
           {this.renderTab('sync',     'fas fa-sync',         'resofire-picks.admin.nav.sync')}
@@ -54,8 +44,7 @@ export default class PicksPage extends AdminPage {
         className={`Button PicksAdminPage-tab ${isActive ? 'Button--primary' : ''}`}
         onclick={() => {
           this.activeTab = key;
-          const base = m.route.get().split('?')[0];
-          m.route.set(base, { tab: key }, { replace: true });
+          m.redraw();
         }}
       >
         <i className={icon} />
@@ -70,35 +59,10 @@ export default class PicksPage extends AdminPage {
       case 'teams':
         return <TeamsTab />;
       case 'sync':
-        // Built in Slice 3 (schedule sync) and Slice 8 (score sync).
-        return (
-          <div className="PicksPlaceholder">
-            {app.translator.trans('resofire-picks.admin.placeholder.coming_soon')}
-          </div>
-        );
       case 'seasons':
-        // Built in Slice 3.
-        return (
-          <div className="PicksPlaceholder">
-            {app.translator.trans('resofire-picks.admin.placeholder.coming_soon')}
-          </div>
-        );
       case 'games':
-        // Built in Slice 4.
-        return (
-          <div className="PicksPlaceholder">
-            {app.translator.trans('resofire-picks.admin.placeholder.coming_soon')}
-          </div>
-        );
       case 'scores':
-        // Built in Slice 7.
-        return (
-          <div className="PicksPlaceholder">
-            {app.translator.trans('resofire-picks.admin.placeholder.coming_soon')}
-          </div>
-        );
       case 'settings':
-        // Built in Slice 9.
         return (
           <div className="PicksPlaceholder">
             {app.translator.trans('resofire-picks.admin.placeholder.coming_soon')}

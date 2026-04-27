@@ -9,7 +9,6 @@ use Intervention\Image\ImageManager;
 use Resofire\Picks\Service\CfbdService;
 use Resofire\Picks\Service\LogoService;
 use Resofire\Picks\Service\TeamSyncService;
-
 class PicksServiceProvider extends AbstractServiceProvider
 {
     public function register(): void

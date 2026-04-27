@@ -6,9 +6,8 @@ import PicksPage from './components/PicksPage';
 export default [
   new Extend.Store().add('picks-teams', Team),
 
-  new Extend.Routes().add('picks-admin', '/picks-admin', PicksPage),
-
   new Extend.Admin()
+    .page(PicksPage)
     .permission(
       () => ({
         icon: 'fas fa-football',
