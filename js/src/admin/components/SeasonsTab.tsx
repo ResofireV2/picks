@@ -27,18 +27,20 @@ export default class SeasonsTab extends Component {
     this.loading = true;
     m.redraw();
 
-    app.store
-      .find<Season[]>('picks-seasons')
-      .then((seasons) => {
+    // Load seasons and all weeks together, then filter client-side.
+    // Flarum 2.x does not support filter[] params on resource endpoints
+    // without a registered model searcher — we avoid that by filtering in JS.
+    Promise.all([
+      app.store.find<Season[]>('picks-seasons'),
+      app.store.find<Week[]>('picks-weeks'),
+    ]).then(([seasons, _weeks]) => {
         this.seasons = seasons.sort((a, b) => (b.year() || 0) - (a.year() || 0));
-        // Auto-select the most recent season
         if (this.seasons.length > 0 && ! this.selectedSeasonId) {
           this.selectedSeasonId = String(this.seasons[0].id());
-          this.loadWeeks(this.selectedSeasonId);
-        } else {
-          this.loading = false;
-          m.redraw();
         }
+        this.filterAndSortWeeks();
+        this.loading = false;
+        m.redraw();
       })
       .catch(() => {
         this.loading = false;
@@ -46,26 +48,22 @@ export default class SeasonsTab extends Component {
       });
   }
 
-  private loadWeeks(seasonId: string) {
-    this.loading = true;
+  private loadWeeks(_seasonId: string) {
+    // Weeks are already loaded in loadSeasons(). Just re-filter.
+    this.filterAndSortWeeks();
     m.redraw();
+  }
 
-    app.store
-      .find<Week[]>('picks-weeks', { filter: { season: seasonId } })
-      .then((weeks) => {
-        this.weeks = weeks.sort((a, b) => {
-          // Regular season first, then postseason
-          if (a.seasonType() !== b.seasonType()) {
-            return a.seasonType() === 'regular' ? -1 : 1;
-          }
-          return (a.weekNumber() || 0) - (b.weekNumber() || 0);
-        });
-        this.loading = false;
-        m.redraw();
-      })
-      .catch(() => {
-        this.loading = false;
-        m.redraw();
+  private filterAndSortWeeks() {
+    const allWeeks = app.store.all<Week>('picks-weeks');
+    this.weeks = allWeeks
+      .filter(w => String(w.seasonId()) === this.selectedSeasonId)
+      .sort((a, b) => {
+        // Regular season before postseason
+        if (a.seasonType() !== b.seasonType()) {
+          return a.seasonType() === 'regular' ? -1 : 1;
+        }
+        return (a.weekNumber() || 0) - (b.weekNumber() || 0);
       });
   }
 
@@ -94,6 +92,9 @@ export default class SeasonsTab extends Component {
             `✅ Sync complete. Weeks: +${response.weeksCreated} created, ${response.weeksUpdated} updated. ` +
             `Games: +${response.gamesCreated} created, ${response.gamesUpdated} updated.`;
           this.lastSync = new Date().toISOString();
+          // Clear store cache and reload
+          app.store.models['picks-seasons'] = {};
+          app.store.models['picks-weeks'] = {};
           this.loadSeasons();
         }
         this.syncing = false;
@@ -154,7 +155,8 @@ export default class SeasonsTab extends Component {
               value={this.selectedSeasonId || ''}
               onchange={(e: Event) => {
                 this.selectedSeasonId = (e.target as HTMLSelectElement).value;
-                this.loadWeeks(this.selectedSeasonId);
+                this.filterAndSortWeeks();
+                m.redraw();
               }}
             >
               {this.seasons.map(s => (

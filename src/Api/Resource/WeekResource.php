@@ -26,14 +26,6 @@ class WeekResource extends AbstractDatabaseResource
 
     public function scope(Builder $query, Context $context): void
     {
-        $queryParams = $context->request->getQueryParams();
-        $filters     = $queryParams['filter'] ?? [];
-        $seasonId    = is_array($filters) ? ($filters['season'] ?? null) : null;
-
-        if ($seasonId) {
-            $query->where('season_id', (int) $seasonId);
-        }
-
         $query->orderByRaw("CASE season_type WHEN 'regular' THEN 0 ELSE 1 END")
               ->orderBy('week_number', 'asc');
     }
