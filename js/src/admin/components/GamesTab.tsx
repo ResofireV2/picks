@@ -52,7 +52,22 @@ export default class GamesTab extends Component {
   oninit(vnode: Mithril.Vnode) {
     super.oninit(vnode);
 
-    // Pre-select the first week
+    const weeks = app.store.all<Week>('picks-weeks');
+    if (weeks.length > 0) {
+      this.setDefaultWeek();
+      this.load(1);
+    } else {
+      // Weeks not in store yet — fetch them first
+      app.store.find<Week[]>('picks-weeks').then(() => {
+        this.setDefaultWeek();
+        this.load(1);
+      }).catch(() => {
+        this.load(1);
+      });
+    }
+  }
+
+  private setDefaultWeek() {
     const weeks = app.store.all<Week>('picks-weeks').sort((a, b) => {
       if (a.seasonType() !== b.seasonType()) return a.seasonType() === 'regular' ? -1 : 1;
       return (a.weekNumber() || 0) - (b.weekNumber() || 0);
@@ -60,8 +75,6 @@ export default class GamesTab extends Component {
     if (weeks.length > 0) {
       this.filterWeekId = String(weeks[0].id());
     }
-
-    this.load(1);
   }
 
   private load(page: number) {
@@ -138,12 +151,15 @@ export default class GamesTab extends Component {
     }
   }
 
-  view() {
-    const weeks = app.store.all<Week>('picks-weeks').sort((a, b) => {
+  private sortedWeeks(): Week[] {
+    return app.store.all<Week>('picks-weeks').sort((a, b) => {
       if (a.seasonType() !== b.seasonType()) return a.seasonType() === 'regular' ? -1 : 1;
       return (a.weekNumber() || 0) - (b.weekNumber() || 0);
     });
+  }
 
+  view() {
+    const weeks    = this.sortedWeeks();
     const total     = this.meta?.total ?? 0;
     const lastPage  = this.meta?.last_page ?? 1;
 
