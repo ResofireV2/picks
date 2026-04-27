@@ -4,6 +4,7 @@ import type { ExtensionPageAttrs } from 'flarum/admin/components/ExtensionPage';
 import type Mithril from 'mithril';
 import TeamsTab from './TeamsTab';
 import SeasonsTab from './SeasonsTab';
+import GamesTab from './GamesTab';
 
 export default class PicksPage extends ExtensionPage {
   private activeTab: string = 'teams';
@@ -61,6 +62,8 @@ export default class PicksPage extends ExtensionPage {
         return <TeamsTab />;
       case 'seasons':
         return <SeasonsTab />;
+      case 'games':
+        return <GamesTab />;
       case 'sync':
       case 'games':
       case 'scores':

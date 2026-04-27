@@ -63,6 +63,21 @@ resofire-picks:
       col_dates: Dates
       col_name: Name
 
+    games:
+      total_label: games loaded
+      all_weeks: All Weeks
+      all_statuses: All Statuses
+      search_placeholder: Search teams...
+      no_games: No games found.
+      enter_result: Enter Result
+      result_preview: Result
+      load_more: Load More
+      col_home: Home
+      col_away: Away
+      col_date: Date
+      col_status: Status
+      col_score: Score
+
     placeholder:
       coming_soon: This section will be available in a future update.
 
