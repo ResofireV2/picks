@@ -11,6 +11,7 @@ use Resofire\Picks\Api\Controller\ListPicksController;
 use Resofire\Picks\Api\Controller\RefreshTeamLogoController;
 use Resofire\Picks\Api\Controller\SyncLogosController;
 use Resofire\Picks\Api\Controller\SyncScheduleController;
+use Resofire\Picks\Api\Controller\SyncScoresController;
 use Resofire\Picks\Api\Controller\SyncTeamsController;
 use Resofire\Picks\Api\Controller\SubmitPickController;
 use Resofire\Picks\Api\ForumPicksAttributes;
@@ -92,6 +93,7 @@ return [
         ->post('/picks/sync/teams', 'picks.sync.teams', SyncTeamsController::class)
         ->post('/picks/sync/logos', 'picks.sync.logos', SyncLogosController::class)
         ->post('/picks/sync/schedule', 'picks.sync.schedule', SyncScheduleController::class)
+        ->post('/picks/sync/scores', 'picks.sync.scores', SyncScoresController::class)
         ->post('/picks/events/{id}/result', 'picks.events.result', EnterResultController::class)
         ->post('/picks/teams/{id}/refresh-logo', 'picks.teams.refresh-logo', RefreshTeamLogoController::class),
 

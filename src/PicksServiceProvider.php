@@ -12,6 +12,8 @@ use Resofire\Picks\Api\Controller\ListEventsController;
 use Resofire\Picks\Api\Controller\ListLeaderboardController;
 use Resofire\Picks\Api\Controller\ListPicksController;
 use Resofire\Picks\Api\Controller\SubmitPickController;
+use Resofire\Picks\Api\Controller\SyncScoresController;
+use Resofire\Picks\Service\SyncScoresService;
 use Resofire\Picks\Service\CfbdService;
 use Resofire\Picks\Service\LogoService;
 use Resofire\Picks\Service\ScheduleSyncService;
@@ -20,6 +22,20 @@ class PicksServiceProvider extends AbstractServiceProvider
 {
     public function register(): void
     {
+        $this->container->singleton(SyncScoresService::class, function ($container) {
+            return new SyncScoresService(
+                $container->make(CfbdService::class),
+                $container->make(SettingsRepositoryInterface::class),
+                $container->make(Queue::class)
+            );
+        });
+
+        $this->container->singleton(SyncScoresController::class, function ($container) {
+            return new SyncScoresController(
+                $container->make(SyncScoresService::class)
+            );
+        });
+
         $this->container->singleton(ListPicksController::class, function ($container) {
             return new ListPicksController(
                 $container->make(SettingsRepositoryInterface::class)

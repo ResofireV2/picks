@@ -48,6 +48,8 @@ export default class GamesTab extends Component {
   private search: string = '';
   private sort: string = 'date_asc';
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  private syncing: boolean = false;
+  private syncResult: string | null = null;
 
   oninit(vnode: Mithril.Vnode) {
     super.oninit(vnode);
@@ -151,6 +153,30 @@ export default class GamesTab extends Component {
     }
   }
 
+  private syncScores() {
+    this.syncing = true;
+    this.syncResult = null;
+    m.redraw();
+
+    app.request<{ status: string; updated: number; scored: number; skipped: number; message?: string }>({
+      method: 'POST',
+      url: app.forum.attribute('apiUrl') + '/picks/sync/scores',
+    }).then((r) => {
+      if (r.status === 'error') {
+        this.syncResult = '❌ ' + (r.message || 'Sync failed.');
+      } else {
+        this.syncResult = `✅ Sync complete. Updated: ${r.updated} games, Scored: ${r.scored} picks batches, Skipped: ${r.skipped}.`;
+        this.load(this.page);
+      }
+      this.syncing = false;
+      m.redraw();
+    }).catch(() => {
+      this.syncResult = '❌ Score sync failed. Check API key and server logs.';
+      this.syncing = false;
+      m.redraw();
+    });
+  }
+
   private sortedWeeks(): Week[] {
     return app.store.all<Week>('picks-weeks').sort((a, b) => {
       if (a.seasonType() !== b.seasonType()) return a.seasonType() === 'regular' ? -1 : 1;
@@ -175,7 +201,21 @@ export default class GamesTab extends Component {
               {total} {app.translator.trans('resofire-picks.admin.games.total_label')}
             </p>
           </div>
+          <div className="PicksTab-actions">
+            <Button
+              className="Button Button--primary"
+              icon="fas fa-sync"
+              loading={this.syncing}
+              onclick={() => this.syncScores()}
+            >
+              {app.translator.trans('resofire-picks.admin.games.sync_scores_button')}
+            </Button>
+          </div>
         </div>
+
+        {this.syncResult && (
+          <div className="PicksAlert PicksAlert--info">{this.syncResult}</div>
+        )}
 
         <div className="PicksTab-filters">
           <select
