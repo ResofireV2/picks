@@ -18,7 +18,7 @@ class DeletePickController implements RequestHandlerInterface
         $actor->assertRegistered();
         $actor->assertCan('picks.makePicks');
 
-        $eventId = (int) $request->getAttribute('id');
+        $eventId = (int) ($request->getQueryParams()['id'] ?? 0);
 
         $event = PickEvent::find($eventId);
 
