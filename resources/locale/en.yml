@@ -98,13 +98,15 @@ resofire-picks:
       vs: vs
       season: Season
       week: Week
-      team: Team
+      team: Player
       date: Date
       status: Status
       score: Score
       result: Result
       points: pts
       match: Match
+      picked: Picked
+      points: Points
 
     status:
       scheduled: Scheduled

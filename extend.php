@@ -2,13 +2,18 @@
 
 namespace Resofire\Picks;
 
+use Flarum\Api\Resource;
 use Flarum\Extend;
 use Resofire\Picks\Api\Controller\EnterResultController;
 use Resofire\Picks\Api\Controller\ListEventsController;
+use Resofire\Picks\Api\Controller\ListLeaderboardController;
+use Resofire\Picks\Api\Controller\ListPicksController;
 use Resofire\Picks\Api\Controller\RefreshTeamLogoController;
 use Resofire\Picks\Api\Controller\SyncLogosController;
 use Resofire\Picks\Api\Controller\SyncScheduleController;
 use Resofire\Picks\Api\Controller\SyncTeamsController;
+use Resofire\Picks\Api\Controller\SubmitPickController;
+use Resofire\Picks\Api\ForumPicksAttributes;
 use Resofire\Picks\Api\Resource\EventResource;
 use Resofire\Picks\Api\Resource\SeasonResource;
 use Resofire\Picks\Api\Resource\TeamResource;
@@ -28,13 +33,21 @@ return [
     // -------------------------------------------------------------------------
     (new Extend\Frontend('forum'))
         ->js(__DIR__.'/js/dist/forum.js')
-        ->css(__DIR__.'/resources/less/forum.less'),
+        ->css(__DIR__.'/resources/less/forum.less')
+        ->route('/picks', 'picks')
+        ->route('/picks/week/{weekId}', 'picks.week'),
 
     (new Extend\Frontend('admin'))
         ->js(__DIR__.'/js/dist/admin.js')
         ->css(__DIR__.'/resources/less/admin.less'),
 
     new Extend\Locales(__DIR__.'/resources/locale'),
+
+    // -------------------------------------------------------------------------
+    // Serialize permission flags to forum JS
+    // -------------------------------------------------------------------------
+    (new Extend\ApiResource(Resource\ForumResource::class))
+        ->fields(ForumPicksAttributes::class),
 
     // -------------------------------------------------------------------------
     // Settings defaults
@@ -73,6 +86,9 @@ return [
     // -------------------------------------------------------------------------
     (new Extend\Routes('api'))
         ->get('/picks/events', 'picks.events.index', ListEventsController::class)
+        ->get('/picks/my-picks', 'picks.my-picks', ListPicksController::class)
+        ->get('/picks/leaderboard', 'picks.leaderboard', ListLeaderboardController::class)
+        ->post('/picks/submit', 'picks.submit', SubmitPickController::class)
         ->post('/picks/sync/teams', 'picks.sync.teams', SyncTeamsController::class)
         ->post('/picks/sync/logos', 'picks.sync.logos', SyncLogosController::class)
         ->post('/picks/sync/schedule', 'picks.sync.schedule', SyncScheduleController::class)

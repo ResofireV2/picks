@@ -9,6 +9,9 @@ use Illuminate\Contracts\Queue\Queue;
 use Intervention\Image\ImageManager;
 use Resofire\Picks\Api\Controller\EnterResultController;
 use Resofire\Picks\Api\Controller\ListEventsController;
+use Resofire\Picks\Api\Controller\ListLeaderboardController;
+use Resofire\Picks\Api\Controller\ListPicksController;
+use Resofire\Picks\Api\Controller\SubmitPickController;
 use Resofire\Picks\Service\CfbdService;
 use Resofire\Picks\Service\LogoService;
 use Resofire\Picks\Service\ScheduleSyncService;
@@ -17,6 +20,20 @@ class PicksServiceProvider extends AbstractServiceProvider
 {
     public function register(): void
     {
+        $this->container->singleton(ListPicksController::class, function ($container) {
+            return new ListPicksController(
+                $container->make(SettingsRepositoryInterface::class)
+            );
+        });
+
+        $this->container->singleton(ListLeaderboardController::class, function ($container) {
+            return new ListLeaderboardController();
+        });
+
+        $this->container->singleton(SubmitPickController::class, function ($container) {
+            return new SubmitPickController();
+        });
+
         $this->container->singleton(EnterResultController::class, function ($container) {
             return new EnterResultController(
                 $container->make(Queue::class)
