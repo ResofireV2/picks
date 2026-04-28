@@ -64,6 +64,7 @@ interface LeaderboardEntry {
 export default class PicksPage extends Page {
   private activeTab: string = 'matches';
   private weeks: WeekInfo[] = [];
+  private weeksLoaded: boolean = false;
   private currentWeekId: number | null = null;
   private games: Game[] = [];
   private gamesLoading: boolean = false;
@@ -111,6 +112,11 @@ export default class PicksPage extends Page {
         this.loadGames();
       }
 
+      // Always redraw even if empty — shows the no-schedule message
+      this.weeksLoaded = true;
+      m.redraw();
+    }).catch(() => {
+      this.weeksLoaded = true;
       m.redraw();
     });
   }
@@ -545,8 +551,14 @@ export default class PicksPage extends Page {
 
           {!canView ? (
             <div className="PicksEmpty">{app.translator.trans('resofire-picks.lib.messages.login_required')}</div>
-          ) : this.weeks.length === 0 ? (
+          ) : !this.weeksLoaded ? (
             <LoadingIndicator />
+          ) : this.weeks.length === 0 ? (
+            <div className="PicksEmpty PicksEmpty--noSchedule">
+              <i className="fas fa-football" />
+              <p>No schedule has been imported yet.</p>
+              <p>Check back soon!</p>
+            </div>
           ) : (
             <>
               {this.activeTab === 'matches' && this.renderMatchesTab()}
