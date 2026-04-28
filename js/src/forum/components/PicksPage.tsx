@@ -184,6 +184,12 @@ export default class PicksPage extends Page {
     if (!game.can_pick) return;
     if (this.submitting[game.id]) return;
 
+    // Clicking the already-selected team removes the pick
+    if (game.my_pick?.selected_outcome === outcome) {
+      this.deletePick(game);
+      return;
+    }
+
     const prev = game.my_pick ? game.my_pick.selected_outcome : null;
     if (!game.my_pick) {
       game.my_pick = { id: 0, selected_outcome: outcome, is_correct: null, confidence: null };
@@ -203,6 +209,33 @@ export default class PicksPage extends Page {
       m.redraw();
     }).catch(() => {
       if (game.my_pick) game.my_pick.selected_outcome = prev as 'home' | 'away';
+      this.submitting[game.id] = false;
+      m.redraw();
+    });
+  }
+
+  private deletePick(game: Game) {
+    if (!game.my_pick || this.submitting[game.id]) return;
+
+    // Optimistic update
+    const prevPick = game.my_pick;
+    game.my_pick = null;
+    this.submitting[game.id] = true;
+    m.redraw();
+
+    app.request({
+      method: 'DELETE',
+      url: `${app.forum.attribute('apiUrl')}/picks/events/${game.id}/pick`,
+    }).then(() => {
+      this.submitting[game.id] = false;
+      // Update the week meta picked count
+      if (this.weeksMeta.picked && this.weeksMeta.picked > 0) {
+        this.weeksMeta.picked--;
+      }
+      m.redraw();
+    }).catch(() => {
+      // Revert on failure
+      game.my_pick = prevPick;
       this.submitting[game.id] = false;
       m.redraw();
     });

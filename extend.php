@@ -4,6 +4,7 @@ namespace Resofire\Picks;
 
 use Flarum\Api\Resource;
 use Flarum\Extend;
+use Resofire\Picks\Api\Controller\DeletePickController;
 use Resofire\Picks\Api\Controller\EnterResultController;
 use Resofire\Picks\Api\Controller\ListEventsController;
 use Resofire\Picks\Api\Controller\ListLeaderboardController;
@@ -98,6 +99,7 @@ return [
         ->get('/picks/my-picks', 'picks.my-picks', ListPicksController::class)
         ->get('/picks/leaderboard', 'picks.leaderboard', ListLeaderboardController::class)
         ->post('/picks/submit', 'picks.submit', SubmitPickController::class)
+        ->delete('/picks/events/{id}/pick', 'picks.pick.delete', DeletePickController::class)
         ->post('/picks/sync/teams', 'picks.sync.teams', SyncTeamsController::class)
         ->post('/picks/sync/logos', 'picks.sync.logos', SyncLogosController::class)
         ->post('/picks/sync/schedule', 'picks.sync.schedule', SyncScheduleController::class)

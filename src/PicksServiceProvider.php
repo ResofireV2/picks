@@ -7,6 +7,7 @@ use Flarum\Foundation\Paths;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Illuminate\Contracts\Queue\Queue;
 use Intervention\Image\ImageManager;
+use Resofire\Picks\Api\Controller\DeletePickController;
 use Resofire\Picks\Api\Controller\EnterResultController;
 use Resofire\Picks\Api\Controller\ListEventsController;
 use Resofire\Picks\Api\Controller\ListLeaderboardController;
@@ -59,6 +60,10 @@ class PicksServiceProvider extends AbstractServiceProvider
             return new SubmitPickController(
                 $container->make(SettingsRepositoryInterface::class)
             );
+        });
+
+        $this->container->singleton(DeletePickController::class, function ($container) {
+            return new DeletePickController();
         });
 
         $this->container->singleton(EnterResultController::class, function ($container) {
