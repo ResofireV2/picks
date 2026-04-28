@@ -30,6 +30,11 @@ class ForumPicksAttributes
                 ->get(fn (object $model, Context $context) =>
                     $context->getActor()->hasPermission('picks.manage')
                 ),
+
+            Schema\Boolean::make('picksConfidenceMode')
+                ->get(fn (object $model, Context $context) =>
+                    (bool) app('flarum.settings')->get('resofire-picks.confidence_mode', false)
+                ),
         ];
     }
 }

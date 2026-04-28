@@ -56,7 +56,9 @@ class PicksServiceProvider extends AbstractServiceProvider
         });
 
         $this->container->singleton(SubmitPickController::class, function ($container) {
-            return new SubmitPickController();
+            return new SubmitPickController(
+                $container->make(SettingsRepositoryInterface::class)
+            );
         });
 
         $this->container->singleton(EnterResultController::class, function ($container) {

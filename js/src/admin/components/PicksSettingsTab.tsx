@@ -11,6 +11,7 @@ export default class PicksSettingsTab extends Component {
   private espnPollingEnabled: boolean = false;
   private espnPollIntervalMinutes: string = '5';
   private defaultWeekView: string = 'current';
+  private confidenceMode: boolean = false;
 
   oninit(vnode: Mithril.Vnode) {
     super.oninit(vnode);
@@ -19,6 +20,7 @@ export default class PicksSettingsTab extends Component {
     this.espnPollingEnabled      = s['resofire-picks.espn_polling_enabled'] === '1';
     this.espnPollIntervalMinutes = s['resofire-picks.espn_poll_interval_minutes'] || '5';
     this.defaultWeekView         = s['resofire-picks.default_week_view']          || 'current';
+    this.confidenceMode          = s['resofire-picks.confidence_mode'] === '1';
   }
 
   private save() {
@@ -34,12 +36,14 @@ export default class PicksSettingsTab extends Component {
         'resofire-picks.espn_polling_enabled':        this.espnPollingEnabled ? '1' : '0',
         'resofire-picks.espn_poll_interval_minutes': this.espnPollIntervalMinutes,
         'resofire-picks.default_week_view':          this.defaultWeekView,
+        'resofire-picks.confidence_mode':            this.confidenceMode ? '1' : '0',
       },
     }).then(() => {
       app.data.settings['resofire-picks.picks_lock_offset_minutes']  = this.picksLockOffsetMinutes;
       app.data.settings['resofire-picks.espn_polling_enabled']        = this.espnPollingEnabled ? '1' : '0';
       app.data.settings['resofire-picks.espn_poll_interval_minutes'] = this.espnPollIntervalMinutes;
       app.data.settings['resofire-picks.default_week_view']          = this.defaultWeekView;
+      app.data.settings['resofire-picks.confidence_mode']            = this.confidenceMode ? '1' : '0';
       this.saving = false;
       this.saveResult = '✅ Settings saved.';
       m.redraw();
@@ -107,6 +111,27 @@ export default class PicksSettingsTab extends Component {
             </select>
             <p className="helpText">
               {app.translator.trans('resofire-picks.admin.settings.default_week_view_help')}
+            </p>
+          </div>
+        </div>
+
+        {/* Confidence Mode */}
+        <div className="PicksSettingsSection">
+          <h4 className="PicksSettingsSection-title">
+            {app.translator.trans('resofire-picks.admin.settings.confidence_title')}
+          </h4>
+
+          <div className="Form-group">
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={this.confidenceMode}
+                onchange={(e: Event) => { this.confidenceMode = (e.target as HTMLInputElement).checked; }}
+              />
+              {' '}{app.translator.trans('resofire-picks.admin.settings.confidence_enabled')}
+            </label>
+            <p className="helpText">
+              {app.translator.trans('resofire-picks.admin.settings.confidence_help')}
             </p>
           </div>
         </div>

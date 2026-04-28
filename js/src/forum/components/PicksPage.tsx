@@ -19,6 +19,7 @@ interface MyPick {
   id: number;
   selected_outcome: 'home' | 'away';
   is_correct: boolean | null;
+  confidence: number | null;
 }
 
 interface Game {
@@ -165,17 +166,16 @@ export default class PicksPage extends Page {
     if (!game.can_pick) return;
     if (this.submitting[game.id]) return;
 
-    // Optimistic update
     const prev = game.my_pick ? game.my_pick.selected_outcome : null;
     if (!game.my_pick) {
-      game.my_pick = { id: 0, selected_outcome: outcome, is_correct: null };
+      game.my_pick = { id: 0, selected_outcome: outcome, is_correct: null, confidence: null };
     } else {
       game.my_pick.selected_outcome = outcome;
     }
     this.submitting[game.id] = true;
     m.redraw();
 
-    app.request<{ status: string; pick_id: number; selected_outcome: string }>({
+    app.request<{ status: string; pick_id: number; selected_outcome: string; confidence: number | null }>({
       method: 'POST',
       url: app.forum.attribute('apiUrl') + '/picks/submit',
       body: { event_id: game.id, selected_outcome: outcome },
@@ -184,11 +184,26 @@ export default class PicksPage extends Page {
       this.submitting[game.id] = false;
       m.redraw();
     }).catch(() => {
-      // Revert on failure
       if (game.my_pick) game.my_pick.selected_outcome = prev as 'home' | 'away';
       this.submitting[game.id] = false;
       m.redraw();
     });
+  }
+
+  private submitConfidence(game: Game, confidence: number) {
+    if (!game.my_pick || !game.can_pick) return;
+    game.my_pick.confidence = confidence;
+    m.redraw();
+
+    app.request({
+      method: 'POST',
+      url: app.forum.attribute('apiUrl') + '/picks/submit',
+      body: {
+        event_id: game.id,
+        selected_outcome: game.my_pick.selected_outcome,
+        confidence,
+      },
+    }).catch(() => m.redraw());
   }
 
   private currentWeek(): WeekInfo | undefined {
@@ -288,10 +303,28 @@ export default class PicksPage extends Page {
 
         {(game.my_pick || (!game.can_pick && game.status === 'scheduled')) && (
           <div className="PicksGameCard-result">
-            {isCorrect && <span className="PicksTag PicksTag--correct">✓ Correct · +1 pt</span>}
+            {isCorrect && <span className="PicksTag PicksTag--correct">✓ Correct · +{game.my_pick?.confidence ?? 1} pt{(game.my_pick?.confidence ?? 1) !== 1 ? 's' : ''}</span>}
             {isIncorrect && <span className="PicksTag PicksTag--incorrect">✗ Incorrect</span>}
             {game.my_pick && !isFinished && <span className="PicksTag PicksTag--pending">Pick saved · awaiting result</span>}
             {!game.can_pick && game.status === 'scheduled' && !game.my_pick && <span className="PicksTag PicksTag--locked">Cutoff passed · no pick</span>}
+          </div>
+        )}
+
+        {/* Confidence selector — shown when mode is on, pick is made, game is open */}
+        {app.forum.attribute('picksConfidenceMode') && game.my_pick && game.can_pick && !isFinished && (
+          <div className="PicksConfidence">
+            <span className="PicksConfidence-label">Confidence:</span>
+            <div className="PicksConfidence-buttons">
+              {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                <button
+                  key={n}
+                  className={`PicksConfidence-btn ${game.my_pick?.confidence === n ? 'PicksConfidence-btn--active' : ''}`}
+                  onclick={() => this.submitConfidence(game, n)}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -387,9 +420,13 @@ export default class PicksPage extends Page {
                       </div>
                     </div>
                     <div className="PicksMyPickRow-status">
-                      {isCorrect && <span className="PicksTag PicksTag--correct">+1 pt</span>}
+                      {isCorrect && <span className="PicksTag PicksTag--correct">+{game.my_pick!.confidence ?? 1} pt{(game.my_pick!.confidence ?? 1) !== 1 ? 's' : ''}</span>}
                       {isIncorrect && <span className="PicksTag PicksTag--incorrect">+0 pts</span>}
-                      {!isCorrect && !isIncorrect && <span className="PicksTag PicksTag--pending">Pending</span>}
+                      {!isCorrect && !isIncorrect && (
+                        <span className="PicksTag PicksTag--pending">
+                          Pending{app.forum.attribute('picksConfidenceMode') && game.my_pick!.confidence ? ` · ${game.my_pick!.confidence}` : ''}
+                        </span>
+                      )}
                     </div>
                   </div>
                 );

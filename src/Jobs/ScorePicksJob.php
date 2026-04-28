@@ -3,8 +3,7 @@
 namespace Resofire\Picks\Jobs;
 
 use Flarum\Queue\AbstractJob;
-use Flarum\User\User;
-use Illuminate\Support\Collection;
+use Flarum\Settings\SettingsRepositoryInterface;
 use Resofire\Picks\Pick;
 use Resofire\Picks\PickEvent;
 use Resofire\Picks\UserScore;
@@ -16,13 +15,15 @@ class ScorePicksJob extends AbstractJob
     ) {
     }
 
-    public function handle(): void
+    public function handle(SettingsRepositoryInterface $settings): void
     {
         $event = PickEvent::find($this->eventId);
 
         if (! $event || ! $event->isFinished() || ! $event->result) {
             return;
         }
+
+        $confidenceMode = (bool) $settings->get('resofire-picks.confidence_mode', false);
 
         $picks = Pick::where('event_id', $this->eventId)
             ->with('user')
@@ -43,7 +44,7 @@ class ScorePicksJob extends AbstractJob
 
         // Recalculate scores for each user
         foreach ($userIds as $userId) {
-            $this->recalculateUserScore($userId, $event->week_id, $this->getSeasonId($event->week_id));
+            $this->recalculateUserScore($userId, $event->week_id, $this->getSeasonId($event->week_id), $confidenceMode);
         }
 
         // Update rank movement for all users in each affected scope
@@ -53,20 +54,17 @@ class ScorePicksJob extends AbstractJob
     /**
      * Recalculate and upsert a user's score for a specific week and season.
      */
-    private function recalculateUserScore(int $userId, ?int $weekId, ?int $seasonId): void
+    private function recalculateUserScore(int $userId, ?int $weekId, ?int $seasonId, bool $confidenceMode = false): void
     {
-        // Week score
         if ($weekId) {
-            $this->upsertScore($userId, $weekId, $seasonId, weekScope: true);
+            $this->upsertScore($userId, $weekId, $seasonId, weekScope: true, confidenceMode: $confidenceMode);
         }
 
-        // Season score
         if ($seasonId) {
-            $this->upsertScore($userId, null, $seasonId, weekScope: false);
+            $this->upsertScore($userId, null, $seasonId, weekScope: false, confidenceMode: $confidenceMode);
         }
 
-        // All-time score (no week, no season)
-        $this->upsertScore($userId, null, null, weekScope: false);
+        $this->upsertScore($userId, null, null, weekScope: false, confidenceMode: $confidenceMode);
     }
 
     /**
@@ -74,7 +72,7 @@ class ScorePicksJob extends AbstractJob
      * MySQL's unique index treats NULL != NULL, so updateOrCreate with NULLs
      * creates duplicates. We use explicit firstOrNew + save instead.
      */
-    private function upsertScore(int $userId, ?int $weekId, ?int $seasonId, bool $weekScope): void
+    private function upsertScore(int $userId, ?int $weekId, ?int $seasonId, bool $weekScope, bool $confidenceMode = false): void
     {
         $query = Pick::where('user_id', $userId)
             ->whereNotNull('is_correct');
@@ -89,7 +87,18 @@ class ScorePicksJob extends AbstractJob
 
         $totalPicks   = (clone $query)->count();
         $correctPicks = (clone $query)->where('is_correct', true)->count();
-        $accuracy     = $totalPicks > 0
+
+        // In confidence mode, points = sum of confidence values for correct picks
+        // In standard mode, points = number of correct picks (1 point each)
+        if ($confidenceMode) {
+            $totalPoints = (clone $query)
+                ->where('is_correct', true)
+                ->sum('confidence') ?: $correctPicks;
+        } else {
+            $totalPoints = $correctPicks;
+        }
+
+        $accuracy = $totalPicks > 0
             ? round($correctPicks / $totalPicks * 100, 2)
             : 0.0;
 
@@ -110,7 +119,7 @@ class ScorePicksJob extends AbstractJob
         $score->season_id     = $seasonId;
         $score->total_picks   = $totalPicks;
         $score->correct_picks = $correctPicks;
-        $score->total_points  = $correctPicks;
+        $score->total_points  = $totalPoints;
         $score->accuracy      = $accuracy;
         $score->save();
     }

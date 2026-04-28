@@ -53,6 +53,7 @@ class ListPicksController implements RequestHandlerInterface
                     'id'               => $pick->id,
                     'selected_outcome' => $pick->selected_outcome,
                     'is_correct'       => $pick->is_correct,
+                    'confidence'       => $pick->confidence,
                 ];
             }
         }

@@ -90,6 +90,10 @@ resofire-picks:
       week_view_current: Current week (auto-detect)
       week_view_first: Always show Week 1
       default_week_view_help: What week users see when they first open the Picks page.
+      confidence_title: Confidence Mode
+      confidence_enabled: Enable confidence ratings (1–10 per pick)
+      confidence_help: When enabled, users rate their confidence in each pick from 1 to 10. Correct picks score their confidence value as points instead of 1 point each.
+
       polling_title: Live Score Polling
       espn_polling_enabled: Enable ESPN live score polling
       espn_polling_help: When enabled, the server will poll ESPN every few minutes on game days to update live scores automatically.

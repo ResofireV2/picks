@@ -4,6 +4,7 @@ namespace Resofire\Picks\Api\Controller;
 
 use Carbon\Carbon;
 use Flarum\Http\RequestUtil;
+use Flarum\Settings\SettingsRepositoryInterface;
 use Illuminate\Support\Arr;
 use Laminas\Diactoros\Response\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
@@ -14,21 +15,40 @@ use Resofire\Picks\PickEvent;
 
 class SubmitPickController implements RequestHandlerInterface
 {
+    public function __construct(
+        protected SettingsRepositoryInterface $settings
+    ) {
+    }
+
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $actor = RequestUtil::getActor($request);
         $actor->assertRegistered();
         $actor->assertCan('picks.makePicks');
 
-        $body    = $request->getParsedBody() ?? [];
-        $eventId = (int) Arr::get($body, 'event_id');
-        $outcome = Arr::get($body, 'selected_outcome');
+        $body       = $request->getParsedBody() ?? [];
+        $eventId    = (int) Arr::get($body, 'event_id');
+        $outcome    = Arr::get($body, 'selected_outcome');
+        $confidence = Arr::get($body, 'confidence');
 
         if (! $eventId || ! in_array($outcome, ['home', 'away'], true)) {
             return new JsonResponse([
                 'status'  => 'error',
                 'message' => 'event_id and selected_outcome (home or away) are required.',
             ], 422);
+        }
+
+        // Validate confidence if provided
+        $confidenceMode = (bool) $this->settings->get('resofire-picks.confidence_mode', false);
+
+        if ($confidence !== null) {
+            $confidence = (int) $confidence;
+            if ($confidence < 1 || $confidence > 10) {
+                return new JsonResponse([
+                    'status'  => 'error',
+                    'message' => 'Confidence must be between 1 and 10.',
+                ], 422);
+            }
         }
 
         $event = PickEvent::find($eventId);
@@ -51,11 +71,15 @@ class SubmitPickController implements RequestHandlerInterface
 
         if ($pick) {
             $pick->selected_outcome = $outcome;
+            if ($confidence !== null) {
+                $pick->confidence = $confidence;
+            }
         } else {
             $pick = new Pick();
-            $pick->user_id  = $actor->id;
-            $pick->event_id = $eventId;
+            $pick->user_id          = $actor->id;
+            $pick->event_id         = $eventId;
             $pick->selected_outcome = $outcome;
+            $pick->confidence       = $confidence;
         }
 
         $pick->save();
@@ -65,6 +89,7 @@ class SubmitPickController implements RequestHandlerInterface
             'pick_id'          => $pick->id,
             'event_id'         => $eventId,
             'selected_outcome' => $pick->selected_outcome,
+            'confidence'       => $pick->confidence,
         ]);
     }
 }
