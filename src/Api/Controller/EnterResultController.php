@@ -3,7 +3,6 @@
 namespace Resofire\Picks\Api\Controller;
 
 use Flarum\Http\RequestUtil;
-use Flarum\Settings\SettingsRepositoryInterface;
 use Illuminate\Contracts\Queue\Queue;
 use Illuminate\Support\Arr;
 use Laminas\Diactoros\Response\JsonResponse;
@@ -12,13 +11,13 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Resofire\Picks\Jobs\ScorePicksJob;
 use Resofire\Picks\PickEvent;
-use Resofire\Picks\Week;
+use Resofire\Picks\Service\SyncScoresService;
 
 class EnterResultController implements RequestHandlerInterface
 {
     public function __construct(
         protected Queue $queue,
-        protected SettingsRepositoryInterface $settings
+        protected SyncScoresService $syncScoresService
     ) {
     }
 
@@ -46,13 +45,12 @@ class EnterResultController implements RequestHandlerInterface
         $event->result     = $event->calculateResult();
         $event->save();
 
-        // Dispatch scoring job to the queue
         $this->queue->push(new ScorePicksJob($event->id));
 
-        // Auto-unlock next week if enabled and this week is now complete
+        // Auto-unlock next week via shared service method
         $nextWeekUnlocked = false;
-        if ($this->settings->get('resofire-picks.auto_unlock_weeks', false) && $event->week_id) {
-            $nextWeekUnlocked = $this->maybeUnlockNextWeek($event->week_id);
+        if ($event->week_id) {
+            $nextWeekUnlocked = $this->syncScoresService->maybeUnlockNextWeek($event->week_id);
         }
 
         return new JsonResponse([
@@ -64,52 +62,5 @@ class EnterResultController implements RequestHandlerInterface
             'gameStatus'       => $event->status,
             'nextWeekUnlocked' => $nextWeekUnlocked,
         ]);
-    }
-
-    /**
-     * Check if all games in the given week are finished.
-     * If so, find the next sequential week and open it.
-     * Returns true if a week was unlocked.
-     */
-    private function maybeUnlockNextWeek(int $weekId): bool
-    {
-        // Check if any games in this week are still unfinished
-        $unfinished = PickEvent::where('week_id', $weekId)
-            ->where('status', '!=', PickEvent::STATUS_FINISHED)
-            ->exists();
-
-        if ($unfinished) {
-            return false;
-        }
-
-        // All games finished — find the current week
-        $currentWeek = Week::find($weekId);
-        if (! $currentWeek) {
-            return false;
-        }
-
-        // Find the next week in the same season by week_number
-        $nextWeek = Week::where('season_id', $currentWeek->season_id)
-            ->where('week_number', '>', $currentWeek->week_number)
-            ->where('season_type', $currentWeek->season_type)
-            ->orderBy('week_number')
-            ->first();
-
-        // If no next regular week, check for postseason
-        if (! $nextWeek && $currentWeek->season_type === 'regular') {
-            $nextWeek = Week::where('season_id', $currentWeek->season_id)
-                ->where('season_type', 'postseason')
-                ->orderBy('week_number')
-                ->first();
-        }
-
-        if (! $nextWeek || $nextWeek->is_open) {
-            return false;
-        }
-
-        $nextWeek->is_open = true;
-        $nextWeek->save();
-
-        return true;
     }
 }

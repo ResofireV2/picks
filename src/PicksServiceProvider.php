@@ -74,7 +74,7 @@ class PicksServiceProvider extends AbstractServiceProvider
         $this->container->singleton(EnterResultController::class, function ($container) {
             return new EnterResultController(
                 $container->make(Queue::class),
-                $container->make(SettingsRepositoryInterface::class)
+                $container->make(SyncScoresService::class)
             );
         });
 

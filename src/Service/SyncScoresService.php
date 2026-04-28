@@ -9,6 +9,7 @@ use Illuminate\Support\Arr;
 use Resofire\Picks\Jobs\ScorePicksJob;
 use Resofire\Picks\Pick;
 use Resofire\Picks\PickEvent;
+use Resofire\Picks\Week;
 
 class SyncScoresService
 {
@@ -43,6 +44,8 @@ class SyncScoresService
         if ($syncRegular)    $seasonTypes[] = 'regular';
         if ($syncPostseason) $seasonTypes[] = 'postseason';
 
+        $weekIdsToCheck = [];
+
         foreach ($seasonTypes as $seasonType) {
             $weekNumbers = $this->getWeekNumbers($seasonType);
 
@@ -55,7 +58,6 @@ class SyncScoresService
                     $homePts   = Arr::get($apiGame, 'homePoints');
                     $awayPts   = Arr::get($apiGame, 'awayPoints');
 
-                    // Only process completed games with actual scores
                     if (! $completed || $homePts === null || $awayPts === null) {
                         $skipped++;
                         continue;
@@ -68,7 +70,6 @@ class SyncScoresService
                         continue;
                     }
 
-                    // Skip if already finished with the same scores
                     if (
                         $event->status === PickEvent::STATUS_FINISHED
                         && $event->home_score === (int) $homePts
@@ -88,16 +89,23 @@ class SyncScoresService
 
                     $updated++;
 
-                    // Dispatch scoring job if this event has picks and
-                    // either just became finished or scores changed
                     $hasPicks = Pick::where('event_id', $event->id)->exists();
-
                     if ($hasPicks) {
                         $this->queue->push(new ScorePicksJob($event->id));
                         $scored++;
                     }
+
+                    // Collect week IDs that need auto-unlock check after all games processed
+                    if (! $wasAlreadyFinished && $event->week_id) {
+                        $weekIdsToCheck[$event->week_id] = true;
+                    }
                 }
             }
+        }
+
+        // Check auto-unlock once per affected week, not once per game
+        foreach (array_keys($weekIdsToCheck) as $weekId) {
+            $this->maybeUnlockNextWeek($weekId);
         }
 
         $this->settings->set(
@@ -200,6 +208,11 @@ class SyncScoresService
                     $this->queue->push(new ScorePicksJob($event->id));
                     $finished++;
                 }
+
+                // Auto-unlock next week if enabled
+                if ($event->week_id) {
+                    $this->maybeUnlockNextWeek($event->week_id);
+                }
             }
         }
 
@@ -209,6 +222,55 @@ class SyncScoresService
         );
 
         return compact('updated', 'finished', 'skipped');
+    }
+
+    /**
+     * If auto-unlock is enabled and all games in the given week are finished,
+     * open the next sequential week for picking.
+     */
+    public function maybeUnlockNextWeek(int $weekId): bool
+    {
+        if (! $this->settings->get('resofire-picks.auto_unlock_weeks', false)) {
+            return false;
+        }
+
+        // Check if any games in this week are still unfinished
+        $unfinished = PickEvent::where('week_id', $weekId)
+            ->where('status', '!=', PickEvent::STATUS_FINISHED)
+            ->exists();
+
+        if ($unfinished) {
+            return false;
+        }
+
+        $currentWeek = Week::find($weekId);
+        if (! $currentWeek) {
+            return false;
+        }
+
+        // Find the next week in the same season by week_number
+        $nextWeek = Week::where('season_id', $currentWeek->season_id)
+            ->where('week_number', '>', $currentWeek->week_number)
+            ->where('season_type', $currentWeek->season_type)
+            ->orderBy('week_number')
+            ->first();
+
+        // If no next regular week, check postseason
+        if (! $nextWeek && $currentWeek->season_type === 'regular') {
+            $nextWeek = Week::where('season_id', $currentWeek->season_id)
+                ->where('season_type', 'postseason')
+                ->orderBy('week_number')
+                ->first();
+        }
+
+        if (! $nextWeek || $nextWeek->is_open) {
+            return false;
+        }
+
+        $nextWeek->is_open = true;
+        $nextWeek->save();
+
+        return true;
     }
 
     /**
