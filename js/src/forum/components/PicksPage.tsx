@@ -47,6 +47,8 @@ interface WeekInfo {
 
 interface LeaderboardEntry {
   rank: number;
+  previous_rank: number | null;
+  movement: number | null;
   user_id: number;
   username: string;
   display_name: string;
@@ -442,6 +444,11 @@ export default class PicksPage extends Page {
                         : <div className="PicksAvatar PicksAvatar--initials">{(entry.display_name || '?').charAt(0)}</div>
                       }
                       <span>{entry.display_name}</span>
+                      {entry.movement !== null && entry.movement !== 0 && (
+                        <span className={`PicksMovement ${entry.movement > 0 ? 'PicksMovement--up' : 'PicksMovement--down'}`}>
+                          {entry.movement > 0 ? `↑${entry.movement}` : `↓${Math.abs(entry.movement)}`}
+                        </span>
+                      )}
                     </div>
                     <div className="PicksLeaderboard-right PicksLeaderboard-pts">{entry.total_points}</div>
                     <div className="PicksLeaderboard-right PicksLeaderboard-wl">{entry.correct_picks}–{entry.total_picks - entry.correct_picks}</div>

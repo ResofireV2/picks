@@ -23,18 +23,22 @@ export default class PicksPage extends ExtensionPage {
 
   content(): Mithril.Children {
     return (
-      <div className="PicksAdminPage">
-        <div className="PicksAdminPage-tabs">
-          {this.renderTab('teams',    'fas fa-users',        'resofire-picks.admin.nav.teams')}
-          {this.renderTab('sync',     'fas fa-sync',         'resofire-picks.admin.nav.sync')}
-          {this.renderTab('seasons',  'fas fa-calendar-alt', 'resofire-picks.admin.nav.seasons')}
-          {this.renderTab('games',    'fas fa-football',     'resofire-picks.admin.nav.games')}
-          {this.renderTab('scores',   'fas fa-trophy',       'resofire-picks.admin.nav.scores')}
-          {this.renderTab('settings', 'fas fa-cog',          'resofire-picks.admin.nav.settings')}
-        </div>
+      <div className="ExtensionPage-settings">
+        <div className="container">
+          <div className="PicksAdminPage">
+            <div className="PicksAdminPage-tabs">
+              {this.renderTab('teams',    'fas fa-users',        'resofire-picks.admin.nav.teams')}
+              {this.renderTab('sync',     'fas fa-sync',         'resofire-picks.admin.nav.sync')}
+              {this.renderTab('seasons',  'fas fa-calendar-alt', 'resofire-picks.admin.nav.seasons')}
+              {this.renderTab('games',    'fas fa-football',     'resofire-picks.admin.nav.games')}
+              {this.renderTab('scores',   'fas fa-trophy',       'resofire-picks.admin.nav.scores')}
+              {this.renderTab('settings', 'fas fa-cog',          'resofire-picks.admin.nav.settings')}
+            </div>
 
-        <div className="PicksAdminPage-content">
-          {this.renderActiveTab()}
+            <div className="PicksAdminPage-content">
+              {this.renderActiveTab()}
+            </div>
+          </div>
         </div>
       </div>
     );

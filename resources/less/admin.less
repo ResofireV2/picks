@@ -1,19 +1,20 @@
 // ============================================================
-// Picks Admin — Slice 2
+// Picks Admin — Complete stylesheet
 // ============================================================
 
-// Tab navigation
+// ─── Tab navigation ──────────────────────────────────────────
 .PicksAdminPage-tabs {
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
   gap: 4px;
-  padding: 0 0 16px;
-  margin-bottom: 16px;
+  padding: 0 0 20px;
+  margin-bottom: 24px;
   border-bottom: 1px solid var(--control-bg);
 
   .PicksAdminPage-tab {
     white-space: nowrap;
+    flex-shrink: 0;
     i { margin-right: 6px; }
   }
 }
@@ -22,16 +23,19 @@
   min-height: 300px;
 }
 
-// Generic tab layout
+// ─── Generic tab layout ──────────────────────────────────────
 .PicksTab-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 
   h3 {
+    font-size: 18px;
+    font-weight: 600;
     margin: 0 0 4px;
-    i { margin-right: 8px; }
+    color: var(--body-color);
+    i { margin-right: 8px; color: var(--muted-color); }
   }
 }
 
@@ -39,6 +43,8 @@
   display: flex;
   gap: 8px;
   flex-shrink: 0;
+  align-items: flex-start;
+  padding-top: 2px;
 }
 
 .PicksTab-meta {
@@ -61,10 +67,44 @@
   }
 }
 
-// Card list table
+// ─── Alert banner ────────────────────────────────────────────
+.PicksAlert {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+
+  &--info {
+    background: var(--control-bg);
+    border-left: 3px solid var(--primary-color);
+  }
+
+  &--error {
+    background: rgba(163, 45, 45, 0.08);
+    border-left: 3px solid #a32d2d;
+    color: #a32d2d;
+  }
+}
+
+// ─── Empty state ─────────────────────────────────────────────
+.PicksEmptyState {
+  text-align: center;
+  padding: 3rem 0;
+  color: var(--muted-color);
+  font-size: 14px;
+}
+
+.PicksPlaceholder {
+  text-align: center;
+  padding: 3rem 0;
+  color: var(--muted-color);
+  font-size: 14px;
+}
+
+// ─── Card list table ─────────────────────────────────────────
 .PicksCardList {
   border: 1px solid var(--control-bg);
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
 }
 
@@ -72,11 +112,12 @@
   display: grid;
   grid-template-columns: 56px 1fr 140px 80px 140px 100px;
   gap: 12px;
-  padding: 8px 12px;
+  padding: 10px 14px;
   background: var(--control-bg);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--muted-color);
 }
 
@@ -84,201 +125,135 @@
   display: grid;
   grid-template-columns: 56px 1fr 140px 80px 140px 100px;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--control-bg);
   align-items: center;
-  border-top: 1px solid var(--control-bg);
 
-  &:hover {
-    background: var(--control-bg);
+  &:last-child { border-bottom: none; }
+  &:hover { background: rgba(0,0,0,0.02); }
+}
+
+.PicksCardList-cell {
+  font-size: 13px;
+  color: var(--body-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &--primary { font-weight: 500; }
+  &--muted   { color: var(--muted-color); }
+
+  &--actions {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+    white-space: nowrap;
+    overflow: visible;
   }
 }
 
-.PicksCardList-cell--primary {
-  font-weight: 600;
-}
-
-.PicksCardList-cell--muted {
-  color: var(--muted-color);
-}
-
-.PicksCardList-cell--actions {
-  display: flex;
-  gap: 4px;
-  justify-content: flex-end;
-}
-
-// Team logo in list
+// ─── Team logos ──────────────────────────────────────────────
 .PicksTeamLogo {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
   border-radius: 4px;
-}
 
-.PicksTeamLogo--placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--control-bg);
-  border-radius: 4px;
-  font-weight: 700;
-  color: var(--muted-color);
-}
-
-// Team edit modal logo preview
-.TeamEditModal-logoPreview {
-  margin: 8px 0;
-  padding: 8px;
-  background: var(--control-bg);
-  border-radius: 6px;
-  display: inline-block;
-
-  img {
-    max-width: 100px;
-    max-height: 100px;
-    object-fit: contain;
-    display: block;
-  }
-
-  &--dark {
-    background: #1a1a2e;
-  }
-}
-
-// Alert banner
-.PicksAlert {
-  padding: 10px 14px;
-  border-radius: 6px;
-  margin-bottom: 16px;
-  font-size: 14px;
-
-  &--info {
+  &--placeholder {
     background: var(--control-bg);
-    border-left: 4px solid var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted-color);
   }
-  &--error {
-    background: #fff0f0;
-    border-left: 4px solid #e74c3c;
+
+  &--small {
+    width: 24px;
+    height: 24px;
   }
 }
 
-// Empty state
-.PicksEmptyState {
-  padding: 40px;
-  text-align: center;
-  color: var(--muted-color);
-}
-
-// Placeholder for unbuilt tabs
-.PicksPlaceholder {
-  padding: 60px;
-  text-align: center;
-  color: var(--muted-color);
-  font-style: italic;
-}
-
-// Seasons tab grid
+// ─── Seasons tab ─────────────────────────────────────────────
 .PicksCardList-header--seasons,
 .PicksCardList-row--seasons {
-  grid-template-columns: 60px 100px 1fr 1fr 80px;
+  grid-template-columns: 60px 110px 1fr 1fr 90px;
 }
 
-// Season type badges
-.PicksBadge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-
-  &--regular {
-    background: rgba(var(--primary-color-rgb, 52, 152, 219), 0.15);
-    color: var(--primary-color);
-  }
-
-  &--postseason {
-    background: rgba(243, 156, 18, 0.15);
-    color: #f39c12;
-  }
-}
-
-// Inline edit input
-.FormControl--small {
-  height: 28px;
-  padding: 2px 8px;
-  font-size: 13px;
-}
-
-// Games tab grid
+// ─── Games tab ───────────────────────────────────────────────
 .PicksCardList-header--games,
 .PicksCardList-row--games {
   grid-template-columns: 1fr 1fr 120px 100px 80px 50px;
 }
 
-// Team cell with logo + name inline
 .PicksTeamCell {
   display: flex;
   align-items: center;
   gap: 8px;
+  overflow: hidden;
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
-// Small logo variant for game rows
-.PicksTeamLogo--small {
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
+// ─── Status / type badges ────────────────────────────────────
+.PicksBadge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  &--regular {
+    background: rgba(52, 152, 219, 0.12);
+    color: #2980b9;
+  }
+
+  &--postseason {
+    background: rgba(243, 156, 18, 0.15);
+    color: #d68910;
+  }
+
+  &--scheduled {
+    background: rgba(127, 140, 141, 0.12);
+    color: var(--muted-color);
+  }
+
+  &--in_progress {
+    background: rgba(39, 174, 96, 0.15);
+    color: #1e8449;
+    animation: picksPulse 1.5s ease-in-out infinite;
+  }
+
+  &--closed {
+    background: rgba(243, 156, 18, 0.15);
+    color: #d68910;
+  }
+
+  &--finished {
+    background: rgba(39, 174, 96, 0.12);
+    color: #1e8449;
+  }
 }
 
-// Status badges
-.PicksBadge--scheduled {
-  background: rgba(52, 152, 219, 0.15);
-  color: #3498db;
-}
-
-.PicksBadge--in_progress {
-  background: rgba(243, 156, 18, 0.15);
-  color: #f39c12;
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
+@keyframes picksPulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  50%       { opacity: 0.55; }
 }
 
-.PicksBadge--closed {
-  background: rgba(243, 156, 18, 0.15);
-  color: #f39c12;
-}
-
-.PicksBadge--finished {
-  background: rgba(39, 174, 96, 0.15);
-  color: #27ae60;
-}
-
-// Load more button row
-.PicksLoadMore {
-  display: flex;
-  justify-content: center;
-  padding: 16px 0;
-}
-
-// Result modal preview
-.PicksResultPreview {
-  padding: 8px 12px;
-  background: var(--control-bg);
-  border-radius: 6px;
-  margin: 0;
-}
-
-// Pagination
+// ─── Pagination ──────────────────────────────────────────────
 .PicksPagination {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  padding: 16px 0;
+  padding: 20px 0 4px;
 
   &-info {
     font-size: 13px;
@@ -286,25 +261,39 @@
   }
 }
 
-// Settings sections
+// Load more
+.PicksLoadMore {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+}
+
+// ─── Inline edit input ───────────────────────────────────────
+.FormControl--small {
+  height: 30px;
+  padding: 3px 8px;
+  font-size: 13px;
+}
+
+// ─── Settings sections ───────────────────────────────────────
 .PicksSettingsSection {
   margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 0.5px solid var(--control-bg);
+  padding-bottom: 1.75rem;
+  border-bottom: 1px solid var(--control-bg);
 
   &:last-of-type { border-bottom: none; }
 
   &-title {
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     color: var(--muted-color);
-    margin: 0 0 1rem;
+    margin: 0 0 16px;
   }
 }
 
-// Inline input + label row
+// Inline input + unit label
 .PicksInputRow {
   display: flex;
   align-items: center;
@@ -314,11 +303,12 @@
   &-label { font-size: 13px; color: var(--muted-color); }
 }
 
-// Sync status rows
+// Sync status list
 .PicksSyncStatus {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  margin-bottom: 4px;
 
   &-row {
     display: flex;
@@ -326,8 +316,8 @@
     gap: 10px;
     font-size: 13px;
 
-    i { color: var(--muted-color); width: 16px; text-align: center; }
-    span { color: var(--muted-color); flex: 1; }
+    i     { color: var(--muted-color); width: 16px; text-align: center; flex-shrink: 0; }
+    span  { color: var(--muted-color); flex: 1; }
     strong { color: var(--body-color); }
   }
 }
@@ -337,5 +327,14 @@
   display: flex;
   align-items: flex-start;
   gap: 6px;
-  i { margin-top: 2px; color: var(--primary-color); }
+  i { margin-top: 2px; color: var(--primary-color); flex-shrink: 0; }
+}
+
+// Result modal preview box
+.PicksResultPreview {
+  padding: 10px 14px;
+  background: var(--control-bg);
+  border-radius: 8px;
+  margin: 0;
+  font-size: 13px;
 }

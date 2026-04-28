@@ -45,6 +45,9 @@ class ScorePicksJob extends AbstractJob
         foreach ($userIds as $userId) {
             $this->recalculateUserScore($userId, $event->week_id, $this->getSeasonId($event->week_id));
         }
+
+        // Update rank movement for all users in each affected scope
+        $this->updateRankMovements($event->week_id, $this->getSeasonId($event->week_id));
     }
 
     /**
@@ -119,5 +122,52 @@ class ScorePicksJob extends AbstractJob
         }
 
         return \Resofire\Picks\Week::find($weekId)?->season_id;
+    }
+
+    /**
+     * After all scores are updated, assign current ranks and store
+     * the previous rank so the leaderboard can show movement arrows.
+     */
+    private function updateRankMovements(?int $weekId, ?int $seasonId): void
+    {
+        $scopes = [];
+
+        if ($weekId && $seasonId) {
+            $scopes[] = ['week_id' => $weekId, 'season_id' => $seasonId];
+        }
+
+        if ($seasonId) {
+            $scopes[] = ['week_id' => null, 'season_id' => $seasonId];
+        }
+
+        $scopes[] = ['week_id' => null, 'season_id' => null];
+
+        foreach ($scopes as $scope) {
+            $query = UserScore::where('total_picks', '>', 0);
+
+            if ($scope['week_id'] !== null) {
+                $query->where('week_id', $scope['week_id'])
+                      ->where('season_id', $scope['season_id']);
+            } elseif ($scope['season_id'] !== null) {
+                $query->whereNull('week_id')->where('season_id', $scope['season_id']);
+            } else {
+                $query->whereNull('week_id')->whereNull('season_id');
+            }
+
+            $scores = $query->orderByDesc('total_points')
+                            ->orderByDesc('correct_picks')
+                            ->get();
+
+            foreach ($scores as $rank => $score) {
+                $currentRank = $rank + 1;
+
+                // Only update previous_rank when the rank actually changes
+                if ($score->previous_rank !== $currentRank) {
+                    // Store old rank as previous before overwriting
+                    $score->previous_rank = $score->previous_rank ?? $currentRank;
+                    $score->save();
+                }
+            }
+        }
     }
 }

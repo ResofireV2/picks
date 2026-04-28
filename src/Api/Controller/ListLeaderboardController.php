@@ -61,8 +61,14 @@ class ListLeaderboardController implements RequestHandlerInterface
         }
 
         $data = $scores->map(function (UserScore $score, int $index) use ($actor) {
+            $currentRank  = $index + 1;
+            $previousRank = $score->previous_rank;
+            $movement     = $previousRank !== null ? $previousRank - $currentRank : null;
+
             return [
-                'rank'          => $index + 1,
+                'rank'          => $currentRank,
+                'previous_rank' => $previousRank,
+                'movement'      => $movement, // positive = moved up, negative = moved down, 0 = no change
                 'user_id'       => $score->user_id,
                 'username'      => $score->user?->username,
                 'display_name'  => $score->user?->display_name ?? $score->user?->username,
