@@ -586,3 +586,21 @@
     &:first-of-type { font-weight: 500; color: var(--body-color); }
   }
 }
+
+// ─── Dark mode logo swapping ──────────────────────────────────
+// Light logos visible by default, dark logos hidden
+.PicksTeamBtn-logo-light,
+.PicksMyPickRow-logo--light { display: block; }
+
+.PicksTeamBtn-logo-dark,
+.PicksMyPickRow-logo--dark  { display: none; }
+
+// Swap when Flarum sets data-theme="dark" or "dark-hc" on <html>
+[data-theme="dark"],
+[data-theme="dark-hc"] {
+  .PicksTeamBtn-logo-light,
+  .PicksMyPickRow-logo--light { display: none; }
+
+  .PicksTeamBtn-logo-dark,
+  .PicksMyPickRow-logo--dark  { display: block; }
+}

@@ -143,6 +143,18 @@ export default class PicksPage extends Page {
   }
 
   private loadLeaderboard() {
+    // No weeks loaded yet — don't attempt the API call
+    if (this.lbScope === 'week' && !this.currentWeekId) {
+      this.lbLoading = false;
+      m.redraw();
+      return;
+    }
+    if (this.lbScope === 'season' && !this.seasonId) {
+      this.lbLoading = false;
+      m.redraw();
+      return;
+    }
+
     this.lbLoading = true;
     m.redraw();
 
@@ -255,7 +267,8 @@ export default class PicksPage extends Page {
     if (isLoser) cls += ' PicksTeamBtn--loser';
     if (!game.can_pick && !isFinished) cls += ' PicksTeamBtn--locked';
 
-    const logoUrl = team?.logo_url;
+    const logoUrl     = team?.logo_url;
+    const logoDarkUrl = team?.logo_dark_url || logoUrl;
 
     return (
       <button
@@ -264,10 +277,14 @@ export default class PicksPage extends Page {
         onclick={() => game.can_pick && this.submitPick(game, side)}
       >
         <div className="PicksTeamBtn-logo">
-          {logoUrl
-            ? <img src={logoUrl} alt={team?.name || ''} />
-            : <span>{(team?.abbreviation || team?.name || '?').charAt(0)}</span>
-          }
+          {logoUrl ? (
+            <>
+              <img src={logoUrl}     alt={team?.name || ''} className="PicksTeamBtn-logo-light" />
+              <img src={logoDarkUrl} alt={team?.name || ''} className="PicksTeamBtn-logo-dark" />
+            </>
+          ) : (
+            <span>{(team?.abbreviation || team?.name || '?').charAt(0)}</span>
+          )}
         </div>
         <div className="PicksTeamBtn-name">{team?.name || '—'}</div>
         <div className="PicksTeamBtn-conf">{team?.conference || ''}</div>
@@ -421,9 +438,19 @@ export default class PicksPage extends Page {
                 return (
                   <div className={`PicksMyPickRow ${isCorrect ? 'PicksMyPickRow--correct' : isIncorrect ? 'PicksMyPickRow--incorrect' : ''}`} key={String(game.id)}>
                     <div className="PicksMyPickRow-logos">
-                      {team?.logo_url && <img src={team.logo_url} alt={team.name} className="PicksMyPickRow-logo" />}
+                      {team?.logo_url && (
+                        <>
+                          <img src={team.logo_url}                      alt={team.name} className="PicksMyPickRow-logo PicksMyPickRow-logo--light" />
+                          <img src={team.logo_dark_url || team.logo_url} alt={team.name} className="PicksMyPickRow-logo PicksMyPickRow-logo--dark" />
+                        </>
+                      )}
                       <span className="PicksMyPickRow-sep">vs</span>
-                      {oppTeam?.logo_url && <img src={oppTeam.logo_url} alt={oppTeam.name} className="PicksMyPickRow-logo" />}
+                      {oppTeam?.logo_url && (
+                        <>
+                          <img src={oppTeam.logo_url}                         alt={oppTeam.name} className="PicksMyPickRow-logo PicksMyPickRow-logo--light" />
+                          <img src={oppTeam.logo_dark_url || oppTeam.logo_url} alt={oppTeam.name} className="PicksMyPickRow-logo PicksMyPickRow-logo--dark" />
+                        </>
+                      )}
                     </div>
                     <div className="PicksMyPickRow-info">
                       <div className="PicksMyPickRow-matchup">{team?.name} vs {oppTeam?.name}</div>
@@ -473,7 +500,11 @@ export default class PicksPage extends Page {
         {this.lbLoading
           ? <LoadingIndicator />
           : this.leaderboard.length === 0
-            ? <div className="PicksEmpty">{app.translator.trans('resofire-picks.lib.messages.no_data')}</div>
+            ? <div className="PicksEmpty">
+                {!this.currentWeekId
+                  ? 'No schedule has been imported yet. Check back soon!'
+                  : app.translator.trans('resofire-picks.lib.messages.no_data')}
+              </div>
             : (
               <div className="PicksLeaderboard">
                 <div className="PicksLeaderboard-head">
