@@ -236,6 +236,9 @@ class SyncScoresService
 
         return json_last_error() === JSON_ERROR_NONE ? $decoded : null;
     }
+
+    /**
+     * Get the week numbers to sync for a given season type.
      * For regular season, reads weeks from picks_weeks in DB.
      * For postseason, always uses week 1 (all bowl games are week 1 in CFBD).
      */
