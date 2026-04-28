@@ -12,7 +12,7 @@ app.initializers.add('resofire/picks', () => {
     items.add(
       'picks',
       <LinkButton href={app.route('picks')} icon="fas fa-football">
-        {app.translator.trans('resofire-picks.lib.nav.picks')}
+        {app.forum.attribute('picksNavLabel') || app.translator.trans('resofire-picks.lib.nav.picks')}
       </LinkButton>,
       80
     );

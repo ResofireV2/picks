@@ -14,6 +14,7 @@ use Resofire\Picks\Api\Controller\SyncLogosController;
 use Resofire\Picks\Api\Controller\SyncScheduleController;
 use Resofire\Picks\Api\Controller\SyncScoresController;
 use Resofire\Picks\Api\Controller\SyncTeamsController;
+use Resofire\Picks\Api\Controller\StatsController;
 use Resofire\Picks\Api\Controller\SubmitPickController;
 use Resofire\Picks\Api\ForumPicksAttributes;
 use Resofire\Picks\Api\Resource\EventResource;
@@ -71,7 +72,9 @@ return [
         ->default('resofire-picks.last_schedule_sync', null)
         ->default('resofire-picks.last_scores_sync', null)
         ->default('resofire-picks.espn_polling_enabled', false)
-        ->default('resofire-picks.espn_poll_interval_minutes', 5),
+        ->default('resofire-picks.espn_poll_interval_minutes', 5)
+        ->default('resofire-picks.nav_label', 'Picks')
+        ->serializeToForum('picksNavLabel', 'resofire-picks.nav_label'),
 
     // -------------------------------------------------------------------------
     // Permissions
@@ -99,6 +102,7 @@ return [
         ->post('/picks/sync/logos', 'picks.sync.logos', SyncLogosController::class)
         ->post('/picks/sync/schedule', 'picks.sync.schedule', SyncScheduleController::class)
         ->post('/picks/sync/scores', 'picks.sync.scores', SyncScoresController::class)
+        ->get('/picks/stats', 'picks.stats', StatsController::class)
         ->post('/picks/reset', 'picks.reset', ResetDataController::class)
         ->post('/picks/events/{id}/result', 'picks.events.result', EnterResultController::class)
         ->post('/picks/teams/{id}/refresh-logo', 'picks.teams.refresh-logo', RefreshTeamLogoController::class),

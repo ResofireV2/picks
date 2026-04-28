@@ -8,6 +8,7 @@ import GamesTab from './GamesTab';
 import SyncSettingsTab from './SyncSettingsTab';
 import PicksSettingsTab from './PicksSettingsTab';
 import LeaderboardTab from './LeaderboardTab';
+import StatsTab from './StatsTab';
 
 export default class PicksPage extends ExtensionPage {
   private activeTab: string = 'teams';
@@ -33,6 +34,7 @@ export default class PicksPage extends ExtensionPage {
               {this.renderTab('seasons',  'fas fa-calendar-alt', 'resofire-picks.admin.nav.seasons')}
               {this.renderTab('games',    'fas fa-football',     'resofire-picks.admin.nav.games')}
               {this.renderTab('scores',   'fas fa-trophy',       'resofire-picks.admin.nav.scores')}
+              {this.renderTab('stats',    'fas fa-chart-bar',    'resofire-picks.admin.nav.stats')}
               {this.renderTab('settings', 'fas fa-cog',          'resofire-picks.admin.nav.settings')}
             </div>
 
@@ -73,6 +75,8 @@ export default class PicksPage extends ExtensionPage {
         return <GamesTab />;
       case 'sync':
         return <SyncSettingsTab />;
+      case 'stats':
+        return <StatsTab />;
       case 'settings':
         return <PicksSettingsTab />;
       case 'scores':

@@ -13,6 +13,7 @@ export default class PicksSettingsTab extends Component {
   private defaultWeekView: string = 'current';
   private confidenceMode: boolean = false;
   private confidencePenalty: string = 'none';
+  private navLabel: string = 'Picks';
 
   private _orig: Record<string, any> = {};
 
@@ -24,12 +25,14 @@ export default class PicksSettingsTab extends Component {
     this.defaultWeekView         = s['resofire-picks.default_week_view']          || 'current';
     this.confidenceMode          = s['resofire-picks.confidence_mode'] === '1';
     this.confidencePenalty       = s['resofire-picks.confidence_penalty']         || 'none';
+    this.navLabel                = s['resofire-picks.nav_label']                  || 'Picks';
     this._orig = {
       picksLockOffsetMinutes: this.picksLockOffsetMinutes,
       espnPollingEnabled:     this.espnPollingEnabled,
       defaultWeekView:        this.defaultWeekView,
       confidenceMode:         this.confidenceMode,
       confidencePenalty:      this.confidencePenalty,
+      navLabel:               this.navLabel,
     };
     this.dirty = false;
   }
@@ -40,7 +43,8 @@ export default class PicksSettingsTab extends Component {
       this.espnPollingEnabled     !== this._orig.espnPollingEnabled      ||
       this.defaultWeekView        !== this._orig.defaultWeekView         ||
       this.confidenceMode         !== this._orig.confidenceMode          ||
-      this.confidencePenalty      !== this._orig.confidencePenalty;
+      this.confidencePenalty      !== this._orig.confidencePenalty       ||
+      this.navLabel               !== this._orig.navLabel;
   }
 
   private save() {
@@ -58,6 +62,7 @@ export default class PicksSettingsTab extends Component {
         'resofire-picks.default_week_view':          this.defaultWeekView,
         'resofire-picks.confidence_mode':            this.confidenceMode ? '1' : '0',
         'resofire-picks.confidence_penalty':         this.confidencePenalty,
+        'resofire-picks.nav_label':                  this.navLabel,
       },
     }).then(() => {
       app.data.settings['resofire-picks.picks_lock_offset_minutes'] = this.picksLockOffsetMinutes;
@@ -65,6 +70,7 @@ export default class PicksSettingsTab extends Component {
       app.data.settings['resofire-picks.default_week_view']         = this.defaultWeekView;
       app.data.settings['resofire-picks.confidence_mode']           = this.confidenceMode ? '1' : '0';
       app.data.settings['resofire-picks.confidence_penalty']        = this.confidencePenalty;
+      app.data.settings['resofire-picks.nav_label']                 = this.navLabel;
       this.saving = false;
       this.dirty = false;
       this._orig = {
@@ -73,6 +79,7 @@ export default class PicksSettingsTab extends Component {
         defaultWeekView:        this.defaultWeekView,
         confidenceMode:         this.confidenceMode,
         confidencePenalty:      this.confidencePenalty,
+        navLabel:               this.navLabel,
       };
       this.saveResult = '✅ Settings saved.';
       m.redraw();
@@ -122,11 +129,25 @@ export default class PicksSettingsTab extends Component {
           </div>
         </div>
 
-        {/* Default Week View */}
+        {/* Display */}
         <div className="PicksSettingsSection">
           <h4 className="PicksSettingsSection-title">
             {app.translator.trans('resofire-picks.admin.settings.display_title')}
           </h4>
+
+          <div className="Form-group">
+            <label>{app.translator.trans('resofire-picks.admin.settings.nav_label')}</label>
+            <input
+              className="FormControl"
+              type="text"
+              value={this.navLabel}
+              placeholder="Picks"
+              oninput={(e: InputEvent) => { this.navLabel = (e.target as HTMLInputElement).value; this.checkDirty(); }}
+            />
+            <p className="helpText">
+              {app.translator.trans('resofire-picks.admin.settings.nav_label_help')}
+            </p>
+          </div>
 
           <div className="Form-group">
             <label>{app.translator.trans('resofire-picks.admin.settings.default_week_view')}</label>

@@ -9,6 +9,7 @@ resofire-picks:
       seasons: Seasons & Weeks
       games: Games
       scores: Leaderboard & Scores
+      stats: Stats
       settings: Picks Settings
 
     page:
@@ -90,6 +91,8 @@ resofire-picks:
 
     settings:
       locking_title: Pick Locking
+      nav_label: Sidebar nav label
+      nav_label_help: The name shown in the forum sidebar navigation. Default is "Picks".
       lock_offset: Lock picks before kickoff
       lock_offset_help: Set to 0 to lock picks exactly at kickoff. Increase to require picks be submitted earlier.
       minutes_before_kickoff: minutes before kickoff
