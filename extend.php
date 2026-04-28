@@ -4,6 +4,7 @@ namespace Resofire\Picks;
 
 use Flarum\Api\Resource;
 use Flarum\Extend;
+use Resofire\Picks\Api\Controller\WeekOpenController;
 use Resofire\Picks\Api\Controller\DeletePickController;
 use Resofire\Picks\Api\Controller\EnterResultController;
 use Resofire\Picks\Api\Controller\ListEventsController;
@@ -68,6 +69,7 @@ return [
         ->default('resofire-picks.picks_lock_offset_minutes', 0)
         ->default('resofire-picks.confidence_mode', false)
         ->default('resofire-picks.confidence_penalty', 'none')
+        ->default('resofire-picks.auto_unlock_weeks', false)
         ->default('resofire-picks.default_week_view', 'current')
         ->default('resofire-picks.last_teams_sync', null)
         ->default('resofire-picks.last_schedule_sync', null)
@@ -100,6 +102,7 @@ return [
         ->get('/picks/leaderboard', 'picks.leaderboard', ListLeaderboardController::class)
         ->post('/picks/submit', 'picks.submit', SubmitPickController::class)
         ->delete('/picks/events/{id}/pick', 'picks.pick.delete', DeletePickController::class)
+        ->post('/picks/weeks/{id}/open', 'picks.weeks.open', WeekOpenController::class)
         ->post('/picks/sync/teams', 'picks.sync.teams', SyncTeamsController::class)
         ->post('/picks/sync/logos', 'picks.sync.logos', SyncLogosController::class)
         ->post('/picks/sync/schedule', 'picks.sync.schedule', SyncScheduleController::class)

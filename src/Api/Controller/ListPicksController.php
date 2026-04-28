@@ -93,10 +93,13 @@ class ListPicksController implements RequestHandlerInterface
             ];
         });
 
+        $weekObj = \Resofire\Picks\Week::find((int) $weekId);
+
         return new JsonResponse([
             'data' => $data->values()->toArray(),
             'meta' => [
                 'week_id'    => (int) $weekId,
+                'week_open'  => $weekObj ? (bool) $weekObj->is_open : false,
                 'total'      => $events->count(),
                 'picked'     => count($myPicks),
             ],

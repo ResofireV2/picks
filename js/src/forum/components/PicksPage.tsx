@@ -66,6 +66,7 @@ export default class PicksPage extends Page {
   private weeks: WeekInfo[] = [];
   private weeksLoaded: boolean = false;
   private currentWeekId: number | null = null;
+  private weekOpen: boolean = false;
   private games: Game[] = [];
   private gamesLoading: boolean = false;
   private submitting: Record<number, boolean> = {};
@@ -134,6 +135,7 @@ export default class PicksPage extends Page {
     }).then((r) => {
       this.games = r.data || [];
       this.weeksMeta = r.meta || {};
+      this.weekOpen = r.meta?.week_open ?? false;
       this.gamesLoading = false;
       m.redraw();
     }).catch(() => {
@@ -416,6 +418,13 @@ export default class PicksPage extends Page {
         {app.session.user && total > 0 && (
           <div className="PicksStatusBar">
             <span>{app.translator.trans('resofire-picks.lib.common.picked')}: <strong>{picked} / {total}</strong></span>
+          </div>
+        )}
+
+        {!this.weekOpen && !this.gamesLoading && this.games.length > 0 && (
+          <div className="PicksWeekLocked">
+            <i className="fas fa-lock" />
+            {' '}Picks for this week are not yet open. Check back soon!
           </div>
         )}
 

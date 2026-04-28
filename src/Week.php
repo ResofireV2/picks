@@ -12,6 +12,7 @@ use Flarum\Database\AbstractModel;
  * @property string      $season_type
  * @property string|null $start_date
  * @property string|null $end_date
+ * @property bool        $is_open
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  */
@@ -28,6 +29,11 @@ class Week extends AbstractModel
         'season_type',
         'start_date',
         'end_date',
+        'is_open',
+    ];
+
+    protected $casts = [
+        'is_open' => 'boolean',
     ];
 
     protected $casts = [

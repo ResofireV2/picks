@@ -106,8 +106,24 @@ class PickEvent extends AbstractModel
 
     public function canPick(): bool
     {
-        return $this->status === self::STATUS_SCHEDULED
-            && Carbon::now()->isBefore($this->cutoff_date);
+        // Game must be scheduled and before cutoff
+        if ($this->status !== self::STATUS_SCHEDULED) {
+            return false;
+        }
+
+        if (! Carbon::now()->isBefore($this->cutoff_date)) {
+            return false;
+        }
+
+        // Week must be open for picking
+        if ($this->week_id !== null) {
+            $week = $this->week;
+            if ($week && ! $week->is_open) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function isScheduled(): bool

@@ -97,6 +97,9 @@ resofire-picks:
       lock_offset_help: Set to 0 to lock picks exactly at kickoff. Increase to require picks be submitted earlier.
       minutes_before_kickoff: minutes before kickoff
       minutes: minutes
+      auto_unlock_weeks: Automatically unlock the next week when the previous week is complete
+      auto_unlock_weeks_help: When enabled, the next week will automatically open for picks once all games in the current week have a result entered.
+      auto_unlock_weeks_note: "Week 1 must always be opened manually. Subsequent weeks unlock automatically when all games in the previous week are finished."
       display_title: Display
       default_week_view: Default week on Picks page
       week_view_current: Current week (auto-detect)

@@ -14,6 +14,7 @@ export default class PicksSettingsTab extends Component {
   private confidenceMode: boolean = false;
   private confidencePenalty: string = 'none';
   private navLabel: string = 'Picks';
+  private autoUnlockWeeks: boolean = false;
 
   private _orig: Record<string, any> = {};
 
@@ -26,6 +27,7 @@ export default class PicksSettingsTab extends Component {
     this.confidenceMode          = s['resofire-picks.confidence_mode'] === '1';
     this.confidencePenalty       = s['resofire-picks.confidence_penalty']         || 'none';
     this.navLabel                = s['resofire-picks.nav_label']                  || 'Picks';
+    this.autoUnlockWeeks         = s['resofire-picks.auto_unlock_weeks'] === '1';
     this._orig = {
       picksLockOffsetMinutes: this.picksLockOffsetMinutes,
       espnPollingEnabled:     this.espnPollingEnabled,
@@ -33,6 +35,7 @@ export default class PicksSettingsTab extends Component {
       confidenceMode:         this.confidenceMode,
       confidencePenalty:      this.confidencePenalty,
       navLabel:               this.navLabel,
+      autoUnlockWeeks:        this.autoUnlockWeeks,
     };
     this.dirty = false;
   }
@@ -44,7 +47,8 @@ export default class PicksSettingsTab extends Component {
       this.defaultWeekView        !== this._orig.defaultWeekView         ||
       this.confidenceMode         !== this._orig.confidenceMode          ||
       this.confidencePenalty      !== this._orig.confidencePenalty       ||
-      this.navLabel               !== this._orig.navLabel;
+      this.navLabel               !== this._orig.navLabel                ||
+      this.autoUnlockWeeks        !== this._orig.autoUnlockWeeks;
   }
 
   private save() {
@@ -63,6 +67,7 @@ export default class PicksSettingsTab extends Component {
         'resofire-picks.confidence_mode':            this.confidenceMode ? '1' : '0',
         'resofire-picks.confidence_penalty':         this.confidencePenalty,
         'resofire-picks.nav_label':                  this.navLabel,
+        'resofire-picks.auto_unlock_weeks':          this.autoUnlockWeeks ? '1' : '0',
       },
     }).then(() => {
       app.data.settings['resofire-picks.picks_lock_offset_minutes'] = this.picksLockOffsetMinutes;
@@ -71,6 +76,7 @@ export default class PicksSettingsTab extends Component {
       app.data.settings['resofire-picks.confidence_mode']           = this.confidenceMode ? '1' : '0';
       app.data.settings['resofire-picks.confidence_penalty']        = this.confidencePenalty;
       app.data.settings['resofire-picks.nav_label']                 = this.navLabel;
+      app.data.settings['resofire-picks.auto_unlock_weeks']         = this.autoUnlockWeeks ? '1' : '0';
       this.saving = false;
       this.dirty = false;
       this._orig = {
@@ -80,6 +86,7 @@ export default class PicksSettingsTab extends Component {
         confidenceMode:         this.confidenceMode,
         confidencePenalty:      this.confidencePenalty,
         navLabel:               this.navLabel,
+        autoUnlockWeeks:        this.autoUnlockWeeks,
       };
       this.saveResult = '✅ Settings saved.';
       m.redraw();
@@ -126,6 +133,26 @@ export default class PicksSettingsTab extends Component {
             <p className="helpText">
               {app.translator.trans('resofire-picks.admin.settings.lock_offset_help')}
             </p>
+          </div>
+
+          <div className="Form-group">
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={this.autoUnlockWeeks}
+                onchange={(e: Event) => { this.autoUnlockWeeks = (e.target as HTMLInputElement).checked; this.checkDirty(); }}
+              />
+              {' '}{app.translator.trans('resofire-picks.admin.settings.auto_unlock_weeks')}
+            </label>
+            <p className="helpText">
+              {app.translator.trans('resofire-picks.admin.settings.auto_unlock_weeks_help')}
+            </p>
+            {this.autoUnlockWeeks && (
+              <p className="helpText PicksHelpNote">
+                <i className="fas fa-info-circle" />
+                {' '}{app.translator.trans('resofire-picks.admin.settings.auto_unlock_weeks_note')}
+              </p>
+            )}
           </div>
         </div>
 

@@ -65,6 +65,9 @@ class WeekResource extends AbstractDatabaseResource
                 ->nullable()
                 ->get(fn (Week $w) => $w->end_date),
 
+            Schema\Boolean::make('isOpen')
+                ->get(fn (Week $w) => (bool) $w->is_open),
+
             Schema\Relationship\ToOne::make('season')
                 ->includable()
                 ->type('picks-seasons'),

@@ -7,6 +7,7 @@ use Flarum\Foundation\Paths;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Illuminate\Contracts\Queue\Queue;
 use Intervention\Image\ImageManager;
+use Resofire\Picks\Api\Controller\WeekOpenController;
 use Resofire\Picks\Api\Controller\DeletePickController;
 use Resofire\Picks\Api\Controller\EnterResultController;
 use Resofire\Picks\Api\Controller\ListEventsController;
@@ -62,13 +63,18 @@ class PicksServiceProvider extends AbstractServiceProvider
             );
         });
 
+        $this->container->singleton(WeekOpenController::class, function ($container) {
+            return new WeekOpenController();
+        });
+
         $this->container->singleton(DeletePickController::class, function ($container) {
             return new DeletePickController();
         });
 
         $this->container->singleton(EnterResultController::class, function ($container) {
             return new EnterResultController(
-                $container->make(Queue::class)
+                $container->make(Queue::class),
+                $container->make(SettingsRepositoryInterface::class)
             );
         });
 

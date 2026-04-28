@@ -107,6 +107,28 @@ export default class SeasonsTab extends Component {
       });
   }
 
+  private togglingWeekId: string | null = null;
+
+  private toggleWeekOpen(week: Week) {
+    const newState = !week.isOpen();
+    this.togglingWeekId = String(week.id());
+    m.redraw();
+
+    app.request<{ status: string; week_id: number; is_open: boolean }>({
+      method: 'POST',
+      url: `${app.forum.attribute('apiUrl')}/picks/weeks/${week.id()}/open`,
+      body: { is_open: newState },
+    }).then((r) => {
+      // Update the store model directly
+      (week as any).data.attributes.isOpen = r.is_open;
+      this.togglingWeekId = null;
+      m.redraw();
+    }).catch(() => {
+      this.togglingWeekId = null;
+      m.redraw();
+    });
+  }
+
   private saveWeekName(week: Week) {
     week.save({ name: this.editingWeekName }).then(() => {
       this.editingWeekId = null;
@@ -225,6 +247,15 @@ export default class SeasonsTab extends Component {
                   </div>
 
                   <div className="PicksCardList-cell PicksCardList-cell--actions">
+                    {/* Open/Close toggle */}
+                    <Button
+                      className={`Button Button--icon ${week.isOpen() ? 'Button--primary' : ''}`}
+                      icon={week.isOpen() ? 'fas fa-lock-open' : 'fas fa-lock'}
+                      title={week.isOpen() ? 'Close week (lock picks)' : 'Open week (allow picks)'}
+                      loading={this.togglingWeekId === String(week.id())}
+                      onclick={() => this.toggleWeekOpen(week)}
+                    />
+
                     {isEditing ? (
                       <>
                         <Button
