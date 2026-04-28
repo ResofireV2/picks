@@ -8,6 +8,7 @@ export default class SyncSettingsTab extends Component {
   private saveResult: string | null = null;
   private resetting: string | null = null;
   private resetResult: string | null = null;
+  private dirty: boolean = false;
 
   // Local copies of settings for editing
   private cfbdApiKey: string = '';
@@ -16,17 +17,38 @@ export default class SyncSettingsTab extends Component {
   private syncRegularSeason: boolean = true;
   private syncPostseason: boolean = true;
 
+  // Saved originals for dirty detection
+  private _orig: Record<string, any> = {};
+
   oninit(vnode: Mithril.Vnode) {
     super.oninit(vnode);
     const s = app.data.settings;
-    this.cfbdApiKey        = s['resofire-picks.cfbd_api_key']      || '';
-    this.seasonYear        = s['resofire-picks.season_year']       || String(new Date().getFullYear());
-    this.conferenceFilter  = s['resofire-picks.conference_filter'] || '';
+    this.cfbdApiKey        = s['resofire-picks.cfbd_api_key']        || '';
+    this.seasonYear        = s['resofire-picks.season_year']         || String(new Date().getFullYear());
+    this.conferenceFilter  = s['resofire-picks.conference_filter']   || '';
     this.syncRegularSeason = s['resofire-picks.sync_regular_season'] !== '0';
-    this.syncPostseason    = s['resofire-picks.sync_postseason'] !== '0';
+    this.syncPostseason    = s['resofire-picks.sync_postseason']     !== '0';
+    this._orig = {
+      cfbdApiKey: this.cfbdApiKey,
+      seasonYear: this.seasonYear,
+      conferenceFilter: this.conferenceFilter,
+      syncRegularSeason: this.syncRegularSeason,
+      syncPostseason: this.syncPostseason,
+    };
+    this.dirty = false;
+  }
+
+  private checkDirty() {
+    this.dirty =
+      this.cfbdApiKey        !== this._orig.cfbdApiKey        ||
+      this.seasonYear        !== this._orig.seasonYear        ||
+      this.conferenceFilter  !== this._orig.conferenceFilter  ||
+      this.syncRegularSeason !== this._orig.syncRegularSeason ||
+      this.syncPostseason    !== this._orig.syncPostseason;
   }
 
   private save() {
+    if (!this.dirty) return;
     this.saving = true;
     this.saveResult = null;
     m.redraw();
@@ -49,6 +71,14 @@ export default class SyncSettingsTab extends Component {
       app.data.settings['resofire-picks.sync_regular_season'] = this.syncRegularSeason ? '1' : '0';
       app.data.settings['resofire-picks.sync_postseason']     = this.syncPostseason ? '1' : '0';
       this.saving = false;
+      this.dirty = false;
+      this._orig = {
+        cfbdApiKey: this.cfbdApiKey,
+        seasonYear: this.seasonYear,
+        conferenceFilter: this.conferenceFilter,
+        syncRegularSeason: this.syncRegularSeason,
+        syncPostseason: this.syncPostseason,
+      };
       this.saveResult = '✅ Settings saved.';
       m.redraw();
     }).catch(() => {
@@ -165,7 +195,7 @@ export default class SyncSettingsTab extends Component {
               type="password"
               value={this.cfbdApiKey}
               placeholder="Your CFBD API key"
-              oninput={(e: InputEvent) => { this.cfbdApiKey = (e.target as HTMLInputElement).value; }}
+              oninput={(e: InputEvent) => { this.cfbdApiKey = (e.target as HTMLInputElement).value; this.checkDirty(); }}
             />
             <p className="helpText">
               {app.translator.trans('resofire-picks.admin.sync.cfbd_api_key_help')}
@@ -180,7 +210,7 @@ export default class SyncSettingsTab extends Component {
               value={this.seasonYear}
               min="2000"
               max="2099"
-              oninput={(e: InputEvent) => { this.seasonYear = (e.target as HTMLInputElement).value; }}
+              oninput={(e: InputEvent) => { this.seasonYear = (e.target as HTMLInputElement).value; this.checkDirty(); }}
             />
             <p className="helpText">
               {app.translator.trans('resofire-picks.admin.sync.season_year_help')}
@@ -194,7 +224,7 @@ export default class SyncSettingsTab extends Component {
               type="text"
               value={this.conferenceFilter}
               placeholder="e.g. SEC (leave blank for all FBS)"
-              oninput={(e: InputEvent) => { this.conferenceFilter = (e.target as HTMLInputElement).value; }}
+              oninput={(e: InputEvent) => { this.conferenceFilter = (e.target as HTMLInputElement).value; this.checkDirty(); }}
             />
             <p className="helpText">
               {app.translator.trans('resofire-picks.admin.sync.conference_filter_help')}
@@ -213,7 +243,7 @@ export default class SyncSettingsTab extends Component {
               <input
                 type="checkbox"
                 checked={this.syncRegularSeason}
-                onchange={(e: Event) => { this.syncRegularSeason = (e.target as HTMLInputElement).checked; }}
+                onchange={(e: Event) => { this.syncRegularSeason = (e.target as HTMLInputElement).checked; this.checkDirty(); }}
               />
               {' '}{app.translator.trans('resofire-picks.admin.sync.sync_regular_season')}
             </label>
@@ -224,7 +254,7 @@ export default class SyncSettingsTab extends Component {
               <input
                 type="checkbox"
                 checked={this.syncPostseason}
-                onchange={(e: Event) => { this.syncPostseason = (e.target as HTMLInputElement).checked; }}
+                onchange={(e: Event) => { this.syncPostseason = (e.target as HTMLInputElement).checked; this.checkDirty(); }}
               />
               {' '}{app.translator.trans('resofire-picks.admin.sync.sync_postseason')}
             </label>
@@ -239,6 +269,7 @@ export default class SyncSettingsTab extends Component {
           <Button
             className="Button Button--primary"
             loading={this.saving}
+            disabled={!this.dirty}
             onclick={() => this.save()}
           >
             {app.translator.trans('resofire-picks.admin.common.save')}

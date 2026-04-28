@@ -513,3 +513,77 @@
   &:hover { background: #8b2525; border-color: #8b2525; }
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
+
+// ─── Admin mobile fixes ───────────────────────────────────────
+@media (max-width: 767.98px) {
+
+  // Teams tab — collapse to show logo, name, abbrev, actions only
+  .PicksCardList-header,
+  .PicksCardList-row {
+    grid-template-columns: 44px 1fr 60px 80px 80px;
+
+    // Hide conference column (3rd child)
+    > :nth-child(3) { display: none; }
+  }
+
+  // Seasons tab — collapse dates column
+  .PicksCardList-header--seasons,
+  .PicksCardList-row--seasons {
+    grid-template-columns: 50px 90px 1fr 80px;
+
+    // Hide dates column (3rd child)
+    > :nth-child(3) { display: none; }
+  }
+
+  // Games tab — collapse to home, away, status, action
+  .PicksCardList-header--games,
+  .PicksCardList-row--games {
+    grid-template-columns: 1fr 1fr 80px 44px;
+
+    // Hide date and score columns
+    > :nth-child(3) { display: none; }
+    > :nth-child(5) { display: none; }
+  }
+
+  // Leaderboard admin — collapse
+  .PicksAdminLeaderboard {
+    &-head,
+    &-row {
+      grid-template-columns: 40px 1fr 48px 48px;
+
+      > :nth-child(4),
+      > :nth-child(5),
+      > :nth-child(6) { display: none; }
+    }
+  }
+
+  // Danger zone stack on mobile
+  .PicksDangerZone-action {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+
+    .Button { align-self: flex-start; }
+  }
+
+  // Settings input row
+  .PicksInputRow {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .PicksAdminPage-tabs {
+    // Hide scrollbar on mobile but keep scrollability
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+
+    // Smaller tab buttons on mobile
+    .PicksAdminPage-tab {
+      padding: 6px 10px;
+      font-size: 12px;
+
+      i { margin-right: 4px; }
+    }
+  }
+}

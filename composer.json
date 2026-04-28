@@ -29,8 +29,8 @@
             "category": "feature",
             "icon": {
                 "name": "fas fa-football",
-                "backgroundColor": "#1a3a5c",
-                "color": "#fff"
+                "backgroundColor": "#69c6b9",
+                "color": "#1A2744"
             }
         },
         "flarum-cli": {
