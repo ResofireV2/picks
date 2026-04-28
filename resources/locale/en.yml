@@ -63,6 +63,40 @@ resofire-picks:
       col_dates: Dates
       col_name: Name
 
+    sync:
+      status_title: Last Sync Status
+      last_teams: Teams
+      last_schedule: Schedule
+      last_scores: Scores
+      api_title: API Configuration
+      cfbd_api_key: CFBD API Key
+      cfbd_api_key_help: Get your free API key at collegefootballdata.com
+      season_year: Season Year
+      season_year_help: The year to sync teams, schedule, and scores for.
+      conference_filter: Conference Filter
+      conference_filter_help: Leave blank to sync all FBS teams. Enter a conference abbreviation (e.g. SEC) to limit syncs to one conference.
+      options_title: Sync Options
+      sync_regular_season: Sync regular season games
+      sync_postseason: Sync postseason / bowl games
+
+    settings:
+      locking_title: Pick Locking
+      lock_offset: Lock picks before kickoff
+      lock_offset_help: Set to 0 to lock picks exactly at kickoff. Increase to require picks be submitted earlier.
+      minutes_before_kickoff: minutes before kickoff
+      minutes: minutes
+      display_title: Display
+      default_week_view: Default week on Picks page
+      week_view_current: Current week (auto-detect)
+      week_view_first: Always show Week 1
+      default_week_view_help: What week users see when they first open the Picks page.
+      polling_title: Live Score Polling
+      espn_polling_enabled: Enable ESPN live score polling
+      espn_polling_help: When enabled, the server will poll ESPN every few minutes on game days to update live scores automatically.
+      poll_interval: Poll interval
+      poll_interval_help: How often to poll ESPN during game days. Lower values mean more up-to-date scores but more server load.
+      polling_note: Live polling runs via the server scheduler. Requires schedule:work to be running (Supervisor). Enable this only during the season.
+
     games:
       total_label: games
       all_weeks: All Weeks

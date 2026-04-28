@@ -285,3 +285,57 @@
     color: var(--muted-color);
   }
 }
+
+// Settings sections
+.PicksSettingsSection {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 0.5px solid var(--control-bg);
+
+  &:last-of-type { border-bottom: none; }
+
+  &-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted-color);
+    margin: 0 0 1rem;
+  }
+}
+
+// Inline input + label row
+.PicksInputRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  &-input { width: 100px; }
+  &-label { font-size: 13px; color: var(--muted-color); }
+}
+
+// Sync status rows
+.PicksSyncStatus {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  &-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+
+    i { color: var(--muted-color); width: 16px; text-align: center; }
+    span { color: var(--muted-color); flex: 1; }
+    strong { color: var(--body-color); }
+  }
+}
+
+// Help note with icon
+.PicksHelpNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  i { margin-top: 2px; color: var(--primary-color); }
+}
