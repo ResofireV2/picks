@@ -94,8 +94,11 @@ class ListEventsController implements RequestHandlerInterface
             'abbreviation' => $team->abbreviation,
             'conference'   => $team->conference,
             'logo_path'    => $team->logo_path,
-            'logo_url'     => $team->logo_path
+            'logo_url'      => $team->logo_path
                 ? $baseUrl . '/' . ltrim($team->logo_path, '/')
+                : null,
+            'logo_dark_url' => $team->logo_dark_path
+                ? $baseUrl . '/' . ltrim($team->logo_dark_path, '/')
                 : null,
         ];
     }

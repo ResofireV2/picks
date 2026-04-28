@@ -754,3 +754,13 @@
   width: 60px;
   text-align: right;
 }
+
+// ─── Dark mode logo swapping (Teams tab) ─────────────────────
+.PicksTeamLogo--light { display: block; }
+.PicksTeamLogo--dark  { display: none; }
+
+[data-theme="dark"],
+[data-theme="dark-hc"] {
+  .PicksTeamLogo--light { display: none; }
+  .PicksTeamLogo--dark  { display: block; }
+}

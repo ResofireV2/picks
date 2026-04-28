@@ -266,13 +266,17 @@ export default class TeamsTab extends Component {
               filtered.map((team) => {
                 const id = parseInt(String(team.id()));
                 const status = this.logoStatus(team);
-                const logoUrl = team.logoUrl();
+                const logoUrl     = team.logoUrl();
+                const logoDarkUrl = team.logoDarkUrl() || logoUrl;
 
                 return (
                   <div key={String(team.id())} className="PicksCardList-row">
                     <div className="PicksCardList-cell">
                       {logoUrl ? (
-                        <img src={logoUrl} alt={team.name() || ''} className="PicksTeamLogo" />
+                        <>
+                          <img src={logoUrl}     alt={team.name() || ''} className="PicksTeamLogo PicksTeamLogo--light" />
+                          <img src={logoDarkUrl} alt={team.name() || ''} className="PicksTeamLogo PicksTeamLogo--dark" />
+                        </>
                       ) : (
                         <div className="PicksTeamLogo PicksTeamLogo--placeholder">
                           {(team.abbreviation() || team.name() || '?').charAt(0)}

@@ -13,6 +13,7 @@ interface GameTeam {
   conference: string | null;
   logo_path: string | null;
   logo_url: string | null;
+  logo_dark_url: string | null;
 }
 
 interface Game {
@@ -139,7 +140,13 @@ export default class GamesTab extends Component {
     if (!team) return <div className="PicksTeamLogo PicksTeamLogo--placeholder PicksTeamLogo--small">?</div>;
 
     if (team.logo_url) {
-      return <img src={team.logo_url} alt={team.name} className="PicksTeamLogo PicksTeamLogo--small" />;
+      const darkUrl = team.logo_dark_url || team.logo_url;
+      return (
+        <>
+          <img src={team.logo_url} alt={team.name} className="PicksTeamLogo PicksTeamLogo--small PicksTeamLogo--light" />
+          <img src={darkUrl}       alt={team.name} className="PicksTeamLogo PicksTeamLogo--small PicksTeamLogo--dark" />
+        </>
+      );
     }
 
     return (
