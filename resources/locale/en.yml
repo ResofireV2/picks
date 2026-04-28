@@ -103,7 +103,6 @@ resofire-picks:
       status: Status
       score: Score
       result: Result
-      points: pts
       match: Match
       picked: Picked
       points: Points
