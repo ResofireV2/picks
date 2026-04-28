@@ -54,6 +54,17 @@ export default class LeaderboardTab extends Component {
   }
 
   private load() {
+    // Don't attempt to load if there are no weeks
+    if (this.scope === 'week' && !this.selectedWeekId) {
+      this.loading = false;
+      m.redraw();
+      return;
+    }
+    if (this.scope === 'season' && !this.seasonId) {
+      this.loading = false;
+      m.redraw();
+      return;
+    }
     this.loading = true;
     this.error = null;
     m.redraw();
@@ -150,7 +161,11 @@ export default class LeaderboardTab extends Component {
         {this.loading ? (
           <LoadingIndicator />
         ) : this.entries.length === 0 ? (
-          <div className="PicksEmptyState">No scores yet for this period.</div>
+          <div className="PicksEmptyState">
+            {!this.selectedWeekId && this.scope === 'week'
+              ? 'No schedule synced yet. Sync a schedule from Seasons & Weeks to see the leaderboard.'
+              : 'No scores yet for this period.'}
+          </div>
         ) : (
           <div className="PicksAdminLeaderboard">
             <div className="PicksAdminLeaderboard-head">

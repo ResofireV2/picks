@@ -74,6 +74,12 @@ export default class StatsTab extends Component {
   }
 
   private load() {
+    if (!this.selectedWeekId) {
+      this.loading = false;
+      m.redraw();
+      return;
+    }
+
     this.loading = true;
     this.error = null;
     m.redraw();
@@ -160,6 +166,10 @@ export default class StatsTab extends Component {
 
         {this.loading ? (
           <LoadingIndicator />
+        ) : !this.selectedWeekId ? (
+          <div className="PicksEmptyState">
+            No schedule synced yet. Sync a schedule from Seasons &amp; Weeks to see stats.
+          </div>
         ) : !s ? null : (
           <>
             {/* Participation */}
