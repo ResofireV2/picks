@@ -30,19 +30,27 @@ export default class LeaderboardTab extends Component {
   oninit(vnode: Mithril.Vnode) {
     super.oninit(vnode);
 
-    // Get season_id from the first week in the store
     const weeks = app.store.all<Week>('picks-weeks');
     if (weeks.length > 0) {
-      this.seasonId = String(weeks[0].seasonId?.() ?? '');
-      // Default to first regular season week
-      const sorted = weeks.sort((a, b) => {
-        if (a.seasonType() !== b.seasonType()) return a.seasonType() === 'regular' ? -1 : 1;
-        return (a.weekNumber() || 0) - (b.weekNumber() || 0);
+      this.initFromWeeks();
+      this.load();
+    } else {
+      app.store.find<Week[]>('picks-weeks').then(() => {
+        this.initFromWeeks();
+        this.load();
+      }).catch(() => {
+        this.error = 'Failed to load weeks.';
+        m.redraw();
       });
-      if (sorted.length > 0) this.selectedWeekId = String(sorted[0].id());
     }
+  }
 
-    this.load();
+  private initFromWeeks() {
+    const sorted = this.sortedWeeks();
+    if (sorted.length > 0) {
+      this.selectedWeekId = String(sorted[0].id());
+      this.seasonId = String(sorted[0].seasonId?.() ?? '');
+    }
   }
 
   private load() {
