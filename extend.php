@@ -64,6 +64,7 @@ return [
         ->default('resofire-picks.reverse_display', false)
         ->default('resofire-picks.picks_lock_offset_minutes', 0)
         ->default('resofire-picks.confidence_mode', false)
+        ->default('resofire-picks.confidence_penalty', 'none')
         ->default('resofire-picks.default_week_view', 'current')
         ->default('resofire-picks.last_teams_sync', null)
         ->default('resofire-picks.last_schedule_sync', null)

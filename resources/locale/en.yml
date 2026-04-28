@@ -93,6 +93,13 @@ resofire-picks:
       confidence_title: Confidence Mode
       confidence_enabled: Enable confidence ratings (1–10 per pick)
       confidence_help: When enabled, users rate their confidence in each pick from 1 to 10. Correct picks score their confidence value as points instead of 1 point each.
+      confidence_penalty: Penalty for incorrect high-confidence picks
+      penalty_none: No penalty
+      penalty_half: Soft penalty (lose half confidence value)
+      penalty_full: Full penalty (lose full confidence value)
+      penalty_none_help: Incorrect picks score 0 points regardless of confidence. No risk, but also no incentive to be accurate with ratings.
+      penalty_half_help: "Incorrect picks deduct half their confidence value (rounded down). Example: confidence 8 wrong = −4 pts. Balanced risk/reward."
+      penalty_full_help: "Incorrect picks deduct their full confidence value. Example: confidence 8 wrong = −8 pts. High risk, high reward — rewards accuracy."
 
       polling_title: Live Score Polling
       espn_polling_enabled: Enable ESPN live score polling

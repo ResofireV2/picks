@@ -23,7 +23,8 @@ class ScorePicksJob extends AbstractJob
             return;
         }
 
-        $confidenceMode = (bool) $settings->get('resofire-picks.confidence_mode', false);
+        $confidenceMode    = (bool) $settings->get('resofire-picks.confidence_mode', false);
+        $confidencePenalty = $settings->get('resofire-picks.confidence_penalty', 'none');
 
         $picks = Pick::where('event_id', $this->eventId)
             ->with('user')
@@ -44,7 +45,7 @@ class ScorePicksJob extends AbstractJob
 
         // Recalculate scores for each user
         foreach ($userIds as $userId) {
-            $this->recalculateUserScore($userId, $event->week_id, $this->getSeasonId($event->week_id), $confidenceMode);
+            $this->recalculateUserScore($userId, $event->week_id, $this->getSeasonId($event->week_id), $confidenceMode, $confidencePenalty);
         }
 
         // Update rank movement for all users in each affected scope
@@ -54,17 +55,17 @@ class ScorePicksJob extends AbstractJob
     /**
      * Recalculate and upsert a user's score for a specific week and season.
      */
-    private function recalculateUserScore(int $userId, ?int $weekId, ?int $seasonId, bool $confidenceMode = false): void
+    private function recalculateUserScore(int $userId, ?int $weekId, ?int $seasonId, bool $confidenceMode = false, string $confidencePenalty = 'none'): void
     {
         if ($weekId) {
-            $this->upsertScore($userId, $weekId, $seasonId, weekScope: true, confidenceMode: $confidenceMode);
+            $this->upsertScore($userId, $weekId, $seasonId, weekScope: true, confidenceMode: $confidenceMode, confidencePenalty: $confidencePenalty);
         }
 
         if ($seasonId) {
-            $this->upsertScore($userId, null, $seasonId, weekScope: false, confidenceMode: $confidenceMode);
+            $this->upsertScore($userId, null, $seasonId, weekScope: false, confidenceMode: $confidenceMode, confidencePenalty: $confidencePenalty);
         }
 
-        $this->upsertScore($userId, null, null, weekScope: false, confidenceMode: $confidenceMode);
+        $this->upsertScore($userId, null, null, weekScope: false, confidenceMode: $confidenceMode, confidencePenalty: $confidencePenalty);
     }
 
     /**
@@ -72,7 +73,7 @@ class ScorePicksJob extends AbstractJob
      * MySQL's unique index treats NULL != NULL, so updateOrCreate with NULLs
      * creates duplicates. We use explicit firstOrNew + save instead.
      */
-    private function upsertScore(int $userId, ?int $weekId, ?int $seasonId, bool $weekScope, bool $confidenceMode = false): void
+    private function upsertScore(int $userId, ?int $weekId, ?int $seasonId, bool $weekScope, bool $confidenceMode = false, string $confidencePenalty = 'none'): void
     {
         $query = Pick::where('user_id', $userId)
             ->whereNotNull('is_correct');
@@ -85,15 +86,31 @@ class ScorePicksJob extends AbstractJob
             ));
         }
 
-        $totalPicks   = (clone $query)->count();
-        $correctPicks = (clone $query)->where('is_correct', true)->count();
+        $allPicks     = (clone $query)->get();
+        $totalPicks   = $allPicks->count();
+        $correctPicks = $allPicks->where('is_correct', true)->count();
 
-        // In confidence mode, points = sum of confidence values for correct picks
-        // In standard mode, points = number of correct picks (1 point each)
         if ($confidenceMode) {
-            $totalPoints = (clone $query)
+            // Points from correct picks
+            $earned = $allPicks
                 ->where('is_correct', true)
-                ->sum('confidence') ?: $correctPicks;
+                ->sum(fn ($p) => $p->confidence ?? 1);
+
+            // Penalty from incorrect picks
+            $penalty = 0;
+            if ($confidencePenalty === 'full') {
+                // Option A: lose full confidence value
+                $penalty = $allPicks
+                    ->where('is_correct', false)
+                    ->sum(fn ($p) => $p->confidence ?? 0);
+            } elseif ($confidencePenalty === 'half') {
+                // Option B: lose half confidence value (rounded down)
+                $penalty = $allPicks
+                    ->where('is_correct', false)
+                    ->sum(fn ($p) => (int) floor(($p->confidence ?? 0) / 2));
+            }
+
+            $totalPoints = max(0, $earned - $penalty);
         } else {
             $totalPoints = $correctPicks;
         }

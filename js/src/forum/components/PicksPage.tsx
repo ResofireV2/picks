@@ -325,6 +325,13 @@ export default class PicksPage extends Page {
                 </button>
               ))}
             </div>
+            {app.forum.attribute('picksConfidencePenalty') !== 'none' && (
+              <span className="PicksConfidence-hint">
+                {app.forum.attribute('picksConfidencePenalty') === 'full'
+                  ? '±pts'
+                  : '−½pts if wrong'}
+              </span>
+            )}
           </div>
         )}
       </div>

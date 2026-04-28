@@ -35,6 +35,11 @@ class ForumPicksAttributes
                 ->get(fn (object $model, Context $context) =>
                     (bool) app('flarum.settings')->get('resofire-picks.confidence_mode', false)
                 ),
+
+            Schema\Str::make('picksConfidencePenalty')
+                ->get(fn (object $model, Context $context) =>
+                    app('flarum.settings')->get('resofire-picks.confidence_penalty', 'none')
+                ),
         ];
     }
 }

@@ -12,6 +12,7 @@ export default class PicksSettingsTab extends Component {
   private espnPollIntervalMinutes: string = '5';
   private defaultWeekView: string = 'current';
   private confidenceMode: boolean = false;
+  private confidencePenalty: string = 'none';
 
   oninit(vnode: Mithril.Vnode) {
     super.oninit(vnode);
@@ -21,6 +22,7 @@ export default class PicksSettingsTab extends Component {
     this.espnPollIntervalMinutes = s['resofire-picks.espn_poll_interval_minutes'] || '5';
     this.defaultWeekView         = s['resofire-picks.default_week_view']          || 'current';
     this.confidenceMode          = s['resofire-picks.confidence_mode'] === '1';
+    this.confidencePenalty       = s['resofire-picks.confidence_penalty']         || 'none';
   }
 
   private save() {
@@ -37,6 +39,7 @@ export default class PicksSettingsTab extends Component {
         'resofire-picks.espn_poll_interval_minutes': this.espnPollIntervalMinutes,
         'resofire-picks.default_week_view':          this.defaultWeekView,
         'resofire-picks.confidence_mode':            this.confidenceMode ? '1' : '0',
+        'resofire-picks.confidence_penalty':         this.confidencePenalty,
       },
     }).then(() => {
       app.data.settings['resofire-picks.picks_lock_offset_minutes']  = this.picksLockOffsetMinutes;
@@ -44,6 +47,7 @@ export default class PicksSettingsTab extends Component {
       app.data.settings['resofire-picks.espn_poll_interval_minutes'] = this.espnPollIntervalMinutes;
       app.data.settings['resofire-picks.default_week_view']          = this.defaultWeekView;
       app.data.settings['resofire-picks.confidence_mode']            = this.confidenceMode ? '1' : '0';
+      app.data.settings['resofire-picks.confidence_penalty']         = this.confidencePenalty;
       this.saving = false;
       this.saveResult = '✅ Settings saved.';
       m.redraw();
@@ -134,6 +138,26 @@ export default class PicksSettingsTab extends Component {
               {app.translator.trans('resofire-picks.admin.settings.confidence_help')}
             </p>
           </div>
+
+          {this.confidenceMode && (
+            <div className="Form-group">
+              <label>{app.translator.trans('resofire-picks.admin.settings.confidence_penalty')}</label>
+              <select
+                className="FormControl"
+                value={this.confidencePenalty}
+                onchange={(e: Event) => { this.confidencePenalty = (e.target as HTMLSelectElement).value; }}
+              >
+                <option value="none">{app.translator.trans('resofire-picks.admin.settings.penalty_none')}</option>
+                <option value="half">{app.translator.trans('resofire-picks.admin.settings.penalty_half')}</option>
+                <option value="full">{app.translator.trans('resofire-picks.admin.settings.penalty_full')}</option>
+              </select>
+              <p className="helpText">
+                {this.confidencePenalty === 'none' && app.translator.trans('resofire-picks.admin.settings.penalty_none_help')}
+                {this.confidencePenalty === 'half' && app.translator.trans('resofire-picks.admin.settings.penalty_half_help')}
+                {this.confidencePenalty === 'full' && app.translator.trans('resofire-picks.admin.settings.penalty_full_help')}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* ESPN Live Polling */}
