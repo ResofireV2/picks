@@ -7,6 +7,7 @@ import SeasonsTab from './SeasonsTab';
 import GamesTab from './GamesTab';
 import SyncSettingsTab from './SyncSettingsTab';
 import PicksSettingsTab from './PicksSettingsTab';
+import LeaderboardTab from './LeaderboardTab';
 
 export default class PicksPage extends ExtensionPage {
   private activeTab: string = 'teams';
@@ -75,11 +76,7 @@ export default class PicksPage extends ExtensionPage {
       case 'settings':
         return <PicksSettingsTab />;
       case 'scores':
-        return (
-          <div className="PicksPlaceholder">
-            {app.translator.trans('resofire-picks.admin.placeholder.coming_soon')}
-          </div>
-        );
+        return <LeaderboardTab />;
       default:
         return <TeamsTab />;
     }

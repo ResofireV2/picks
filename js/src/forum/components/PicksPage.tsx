@@ -434,9 +434,17 @@ export default class PicksPage extends Page {
                   <div className="PicksLeaderboard-right">Acc</div>
                 </div>
                 {this.leaderboard.map(entry => (
-                  <div className={`PicksLeaderboard-row ${entry.is_me ? 'PicksLeaderboard-row--me' : ''}`} key={String(entry.user_id)}>
+                  <div
+                    className={`PicksLeaderboard-row
+                      ${entry.is_me ? 'PicksLeaderboard-row--me' : ''}
+                      ${entry.rank === 1 ? 'PicksLeaderboard-row--gold' : ''}
+                      ${entry.rank === 2 ? 'PicksLeaderboard-row--silver' : ''}
+                      ${entry.rank === 3 ? 'PicksLeaderboard-row--bronze' : ''}
+                    `}
+                    key={String(entry.user_id)}
+                  >
                     <div className={`PicksLeaderboard-rank ${entry.rank === 1 ? 'PicksLeaderboard-rank--gold' : ''}`}>
-                      {entry.rank}
+                      {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : entry.rank}
                     </div>
                     <div className="PicksLeaderboard-user">
                       {entry.avatar_url
