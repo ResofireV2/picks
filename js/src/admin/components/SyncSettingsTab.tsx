@@ -6,6 +6,8 @@ import type Mithril from 'mithril';
 export default class SyncSettingsTab extends Component {
   private saving: boolean = false;
   private saveResult: string | null = null;
+  private resetting: string | null = null;
+  private resetResult: string | null = null;
 
   // Local copies of settings for editing
   private cfbdApiKey: string = '';
@@ -52,6 +54,50 @@ export default class SyncSettingsTab extends Component {
     }).catch(() => {
       this.saving = false;
       this.saveResult = '❌ Failed to save settings.';
+      m.redraw();
+    });
+  }
+
+  private reset(scope: 'schedule' | 'all') {
+    const messages: Record<string, string> = {
+      schedule: 'This will permanently delete all seasons, weeks, games, picks, and scores. Teams and logos will be kept.\n\nThis cannot be undone. Are you sure?',
+      all:      'This will permanently delete ALL data — teams, logos, seasons, weeks, games, picks, and scores.\n\nThis cannot be undone. Are you absolutely sure?',
+    };
+
+    if (!window.confirm(messages[scope])) return;
+
+    // Double-confirm for full reset
+    if (scope === 'all') {
+      if (!window.confirm('Second confirmation required: Delete ALL Picks data including all teams and logos?')) return;
+    }
+
+    this.resetting = scope;
+    this.resetResult = null;
+    m.redraw();
+
+    app.request<{ status: string; scope: string; counts: Record<string, number>; message?: string }>({
+      method: 'POST',
+      url: app.forum.attribute('apiUrl') + '/picks/reset',
+      body: { scope },
+    }).then((r) => {
+      if (r.status === 'error') {
+        this.resetResult = '❌ ' + (r.message || 'Reset failed.');
+      } else {
+        const c = r.counts;
+        const parts = [];
+        if (c.seasons)  parts.push(`${c.seasons} seasons`);
+        if (c.weeks)    parts.push(`${c.weeks} weeks`);
+        if (c.events)   parts.push(`${c.events} games`);
+        if (c.picks)    parts.push(`${c.picks} picks`);
+        if (c.scores)   parts.push(`${c.scores} scores`);
+        if (c.teams)    parts.push(`${c.teams} teams`);
+        this.resetResult = `✅ Reset complete. Deleted: ${parts.join(', ') || 'nothing'}.`;
+      }
+      this.resetting = null;
+      m.redraw();
+    }).catch(() => {
+      this.resetResult = '❌ Reset failed. Check server logs.';
+      this.resetting = null;
       m.redraw();
     });
   }
@@ -197,6 +243,55 @@ export default class SyncSettingsTab extends Component {
           >
             {app.translator.trans('resofire-picks.admin.common.save')}
           </Button>
+        </div>
+
+        {/* Danger Zone */}
+        <div className="PicksDangerZone">
+          <h4 className="PicksDangerZone-title">
+            <i className="fas fa-exclamation-triangle" />
+            {' '}{app.translator.trans('resofire-picks.admin.sync.danger_title')}
+          </h4>
+          <p className="PicksDangerZone-description">
+            {app.translator.trans('resofire-picks.admin.sync.danger_description')}
+          </p>
+
+          <div className="PicksDangerZone-actions">
+            <div className="PicksDangerZone-action">
+              <div>
+                <strong>{app.translator.trans('resofire-picks.admin.sync.reset_schedule_title')}</strong>
+                <p>{app.translator.trans('resofire-picks.admin.sync.reset_schedule_description')}</p>
+              </div>
+              <Button
+                className="Button Button--danger"
+                loading={this.resetting === 'schedule'}
+                disabled={this.resetting !== null}
+                onclick={() => this.reset('schedule')}
+              >
+                {app.translator.trans('resofire-picks.admin.sync.reset_schedule_button')}
+              </Button>
+            </div>
+
+            <div className="PicksDangerZone-action PicksDangerZone-action--severe">
+              <div>
+                <strong>{app.translator.trans('resofire-picks.admin.sync.reset_all_title')}</strong>
+                <p>{app.translator.trans('resofire-picks.admin.sync.reset_all_description')}</p>
+              </div>
+              <Button
+                className="Button Button--danger"
+                loading={this.resetting === 'all'}
+                disabled={this.resetting !== null}
+                onclick={() => this.reset('all')}
+              >
+                {app.translator.trans('resofire-picks.admin.sync.reset_all_button')}
+              </Button>
+            </div>
+          </div>
+
+          {this.resetResult && (
+            <div className="PicksAlert PicksAlert--info" style="margin-top: 12px;">
+              {this.resetResult}
+            </div>
+          )}
         </div>
       </div>
     );

@@ -79,6 +79,15 @@ resofire-picks:
       sync_regular_season: Sync regular season games
       sync_postseason: Sync postseason / bowl games
 
+      danger_title: Danger Zone
+      danger_description: These actions are irreversible. Use with caution.
+      reset_schedule_title: Reset Schedule Data
+      reset_schedule_description: Deletes all seasons, weeks, games, picks, and scores. Teams and logos are kept.
+      reset_schedule_button: Reset Schedule
+      reset_all_title: Reset All Data
+      reset_all_description: Deletes everything — teams, logos, seasons, weeks, games, picks, and scores. Requires double confirmation.
+      reset_all_button: Reset Everything
+
     settings:
       locking_title: Pick Locking
       lock_offset: Lock picks before kickoff

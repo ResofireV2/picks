@@ -9,6 +9,7 @@ use Resofire\Picks\Api\Controller\ListEventsController;
 use Resofire\Picks\Api\Controller\ListLeaderboardController;
 use Resofire\Picks\Api\Controller\ListPicksController;
 use Resofire\Picks\Api\Controller\RefreshTeamLogoController;
+use Resofire\Picks\Api\Controller\ResetDataController;
 use Resofire\Picks\Api\Controller\SyncLogosController;
 use Resofire\Picks\Api\Controller\SyncScheduleController;
 use Resofire\Picks\Api\Controller\SyncScoresController;
@@ -98,6 +99,7 @@ return [
         ->post('/picks/sync/logos', 'picks.sync.logos', SyncLogosController::class)
         ->post('/picks/sync/schedule', 'picks.sync.schedule', SyncScheduleController::class)
         ->post('/picks/sync/scores', 'picks.sync.scores', SyncScoresController::class)
+        ->post('/picks/reset', 'picks.reset', ResetDataController::class)
         ->post('/picks/events/{id}/result', 'picks.events.result', EnterResultController::class)
         ->post('/picks/teams/{id}/refresh-logo', 'picks.teams.refresh-logo', RefreshTeamLogoController::class),
 
