@@ -19,6 +19,7 @@ use Resofire\Picks\Api\Resource\EventResource;
 use Resofire\Picks\Api\Resource\SeasonResource;
 use Resofire\Picks\Api\Resource\TeamResource;
 use Resofire\Picks\Api\Resource\WeekResource;
+use Resofire\Picks\Console\PollLiveScoresCommand;
 use Resofire\Picks\Console\SyncTeamsCommand;
 use Resofire\Picks\PicksServiceProvider;
 
@@ -66,7 +67,9 @@ return [
         ->default('resofire-picks.default_week_view', 'current')
         ->default('resofire-picks.last_teams_sync', null)
         ->default('resofire-picks.last_schedule_sync', null)
-        ->default('resofire-picks.last_scores_sync', null),
+        ->default('resofire-picks.last_scores_sync', null)
+        ->default('resofire-picks.espn_polling_enabled', false)
+        ->default('resofire-picks.espn_poll_interval_minutes', 5),
 
     // -------------------------------------------------------------------------
     // Permissions
@@ -105,5 +108,9 @@ return [
     // Console commands
     // -------------------------------------------------------------------------
     (new Extend\Console())
-        ->command(SyncTeamsCommand::class),
+        ->command(SyncTeamsCommand::class)
+        ->command(PollLiveScoresCommand::class)
+        ->schedule(PollLiveScoresCommand::class, function ($event) {
+            $event->everyFiveMinutes();
+        }),
 ];

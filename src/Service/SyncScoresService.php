@@ -109,7 +109,133 @@ class SyncScoresService
     }
 
     /**
-     * Get the week numbers to sync for a given season type.
+     * Sync live and completed scores from the ESPN scoreboard API.
+     * No auth required — ESPN's scoreboard is public.
+     *
+     * Handles three states based on status.type.state:
+     * - "pre"  → skip (not started)
+     * - "in"   → update scores on event, mark as in_progress, no scoring job
+     * - "post" → update scores, mark as finished, dispatch ScorePicksJob if picks exist
+     *
+     * Returns summary counts.
+     */
+    public function syncFromEspn(): array
+    {
+        $url      = 'https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard';
+        $response = $this->fetchUrl($url);
+
+        if ($response === null) {
+            throw new \RuntimeException('Failed to fetch ESPN scoreboard.');
+        }
+
+        $events    = $response['events'] ?? [];
+        $updated   = 0;
+        $finished  = 0;
+        $skipped   = 0;
+
+        foreach ($events as $espnEvent) {
+            $espnId      = $espnEvent['id'] ?? null;
+            $competition = $espnEvent['competitions'][0] ?? null;
+
+            if (! $espnId || ! $competition) {
+                $skipped++;
+                continue;
+            }
+
+            $statusType = $competition['status']['type'] ?? [];
+            $state      = $statusType['state'] ?? 'pre';
+            $completed  = (bool) ($statusType['completed'] ?? false);
+
+            // Skip games that haven't started
+            if ($state === 'pre') {
+                $skipped++;
+                continue;
+            }
+
+            // Match to our event by cfbd_id (ESPN event id = CFBD game id)
+            $event = PickEvent::where('cfbd_id', (int) $espnId)->first();
+
+            if (! $event) {
+                $skipped++;
+                continue;
+            }
+
+            // Parse scores from competitors
+            $homeScore = null;
+            $awayScore = null;
+
+            foreach ($competition['competitors'] ?? [] as $competitor) {
+                $side  = $competitor['homeAway'] ?? null;
+                $score = isset($competitor['score']) ? (int) $competitor['score'] : null;
+
+                if ($side === 'home') $homeScore = $score;
+                if ($side === 'away') $awayScore = $score;
+            }
+
+            if ($homeScore === null || $awayScore === null) {
+                $skipped++;
+                continue;
+            }
+
+            $wasFinished = $event->status === PickEvent::STATUS_FINISHED;
+
+            $event->home_score = $homeScore;
+            $event->away_score = $awayScore;
+
+            if ($completed) {
+                $event->status = PickEvent::STATUS_FINISHED;
+                $event->result = $event->calculateResult();
+            } else {
+                // In progress — update score but don't finalize
+                $event->status = 'in_progress';
+            }
+
+            $event->save();
+            $updated++;
+
+            // Only dispatch scoring job when a game just became finished
+            if ($completed && ! $wasFinished) {
+                $hasPicks = Pick::where('event_id', $event->id)->exists();
+                if ($hasPicks) {
+                    $this->queue->push(new ScorePicksJob($event->id));
+                    $finished++;
+                }
+            }
+        }
+
+        $this->settings->set(
+            'resofire-picks.last_scores_sync',
+            Carbon::now()->toIso8601String()
+        );
+
+        return compact('updated', 'finished', 'skipped');
+    }
+
+    /**
+     * Fetch a URL via curl and return decoded JSON, or null on failure.
+     */
+    private function fetchUrl(string $url): ?array
+    {
+        $ch = curl_init($url);
+
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 15,
+            CURLOPT_USERAGENT      => 'resofire/picks',
+        ]);
+
+        $body     = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($body === false || $httpCode !== 200) {
+            return null;
+        }
+
+        $decoded = json_decode($body, true);
+
+        return json_last_error() === JSON_ERROR_NONE ? $decoded : null;
+    }
      * For regular season, reads weeks from picks_weeks in DB.
      * For postseason, always uses week 1 (all bowl games are week 1 in CFBD).
      */

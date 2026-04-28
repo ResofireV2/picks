@@ -236,6 +236,17 @@
   color: #3498db;
 }
 
+.PicksBadge--in_progress {
+  background: rgba(243, 156, 18, 0.15);
+  color: #f39c12;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 .PicksBadge--closed {
   background: rgba(243, 156, 18, 0.15);
   color: #f39c12;

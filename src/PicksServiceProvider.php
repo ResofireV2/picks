@@ -13,11 +13,13 @@ use Resofire\Picks\Api\Controller\ListLeaderboardController;
 use Resofire\Picks\Api\Controller\ListPicksController;
 use Resofire\Picks\Api\Controller\SubmitPickController;
 use Resofire\Picks\Api\Controller\SyncScoresController;
+use Resofire\Picks\Console\PollLiveScoresCommand;
 use Resofire\Picks\Service\SyncScoresService;
 use Resofire\Picks\Service\CfbdService;
 use Resofire\Picks\Service\LogoService;
 use Resofire\Picks\Service\ScheduleSyncService;
 use Resofire\Picks\Service\TeamSyncService;
+
 class PicksServiceProvider extends AbstractServiceProvider
 {
     public function register(): void
@@ -33,6 +35,13 @@ class PicksServiceProvider extends AbstractServiceProvider
         $this->container->singleton(SyncScoresController::class, function ($container) {
             return new SyncScoresController(
                 $container->make(SyncScoresService::class)
+            );
+        });
+
+        $this->container->singleton(PollLiveScoresCommand::class, function ($container) {
+            return new PollLiveScoresCommand(
+                $container->make(SyncScoresService::class),
+                $container->make(SettingsRepositoryInterface::class)
             );
         });
 

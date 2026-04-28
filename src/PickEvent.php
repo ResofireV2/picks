@@ -27,9 +27,10 @@ class PickEvent extends AbstractModel
 
     protected $table = 'picks_events';
 
-    const STATUS_SCHEDULED = 'scheduled';
-    const STATUS_CLOSED    = 'closed';
-    const STATUS_FINISHED  = 'finished';
+    const STATUS_SCHEDULED   = 'scheduled';
+    const STATUS_CLOSED      = 'closed';
+    const STATUS_IN_PROGRESS = 'in_progress';
+    const STATUS_FINISHED    = 'finished';
 
     const RESULT_HOME = 'home';
     const RESULT_AWAY = 'away';

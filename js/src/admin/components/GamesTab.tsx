@@ -117,13 +117,20 @@ export default class GamesTab extends Component {
 
   private statusBadge(status: string): Mithril.Children {
     const classes: Record<string, string> = {
-      scheduled: 'PicksBadge--scheduled',
-      closed:    'PicksBadge--closed',
-      finished:  'PicksBadge--finished',
+      scheduled:   'PicksBadge--scheduled',
+      in_progress: 'PicksBadge--in_progress',
+      closed:      'PicksBadge--closed',
+      finished:    'PicksBadge--finished',
+    };
+    const labels: Record<string, string> = {
+      scheduled:   'Scheduled',
+      in_progress: '● Live',
+      closed:      'Closed',
+      finished:    'Final',
     };
     return (
       <span className={`PicksBadge ${classes[status] || ''}`}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {labels[status] || status}
       </span>
     );
   }
