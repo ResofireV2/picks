@@ -574,15 +574,16 @@
 
 @media (max-width: 767.98px) {
   .PicksAdminPage-tabs {
-    // Hide scrollbar on mobile but keep scrollability
+    flex-wrap: wrap;
+    overflow-x: visible;
     scrollbar-width: none;
     &::-webkit-scrollbar { display: none; }
 
-    // Smaller tab buttons on mobile
     .PicksAdminPage-tab {
       padding: 6px 10px;
       font-size: 12px;
-
+      flex: 1 1 auto;
+      text-align: center;
       i { margin-right: 4px; }
     }
   }

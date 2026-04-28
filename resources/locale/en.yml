@@ -112,10 +112,8 @@ resofire-picks:
 
       polling_title: Live Score Polling
       espn_polling_enabled: Enable ESPN live score polling
-      espn_polling_help: When enabled, the server will poll ESPN every few minutes on game days to update live scores automatically.
-      poll_interval: Poll interval
-      poll_interval_help: How often to poll ESPN during game days. Lower values mean more up-to-date scores but more server load.
-      polling_note: Live polling runs via the server scheduler. Requires schedule:work to be running (Supervisor). Enable this only during the season.
+      espn_polling_help: When enabled, the server will poll ESPN every 5 minutes on game days to update live scores automatically.
+      polling_note: Live polling runs via the server scheduler every 5 minutes. Requires schedule:work to be running (Supervisor). Enable this only during the season.
 
     games:
       total_label: games

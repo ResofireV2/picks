@@ -10,7 +10,6 @@ export default class PicksSettingsTab extends Component {
 
   private picksLockOffsetMinutes: string = '0';
   private espnPollingEnabled: boolean = false;
-  private espnPollIntervalMinutes: string = '5';
   private defaultWeekView: string = 'current';
   private confidenceMode: boolean = false;
   private confidencePenalty: string = 'none';
@@ -22,29 +21,26 @@ export default class PicksSettingsTab extends Component {
     const s = app.data.settings;
     this.picksLockOffsetMinutes  = s['resofire-picks.picks_lock_offset_minutes']  || '0';
     this.espnPollingEnabled      = s['resofire-picks.espn_polling_enabled'] === '1';
-    this.espnPollIntervalMinutes = s['resofire-picks.espn_poll_interval_minutes'] || '5';
     this.defaultWeekView         = s['resofire-picks.default_week_view']          || 'current';
     this.confidenceMode          = s['resofire-picks.confidence_mode'] === '1';
     this.confidencePenalty       = s['resofire-picks.confidence_penalty']         || 'none';
     this._orig = {
-      picksLockOffsetMinutes:  this.picksLockOffsetMinutes,
-      espnPollingEnabled:      this.espnPollingEnabled,
-      espnPollIntervalMinutes: this.espnPollIntervalMinutes,
-      defaultWeekView:         this.defaultWeekView,
-      confidenceMode:          this.confidenceMode,
-      confidencePenalty:       this.confidencePenalty,
+      picksLockOffsetMinutes: this.picksLockOffsetMinutes,
+      espnPollingEnabled:     this.espnPollingEnabled,
+      defaultWeekView:        this.defaultWeekView,
+      confidenceMode:         this.confidenceMode,
+      confidencePenalty:      this.confidencePenalty,
     };
     this.dirty = false;
   }
 
   private checkDirty() {
     this.dirty =
-      this.picksLockOffsetMinutes  !== this._orig.picksLockOffsetMinutes  ||
-      this.espnPollingEnabled      !== this._orig.espnPollingEnabled       ||
-      this.espnPollIntervalMinutes !== this._orig.espnPollIntervalMinutes  ||
-      this.defaultWeekView         !== this._orig.defaultWeekView          ||
-      this.confidenceMode          !== this._orig.confidenceMode           ||
-      this.confidencePenalty       !== this._orig.confidencePenalty;
+      this.picksLockOffsetMinutes !== this._orig.picksLockOffsetMinutes ||
+      this.espnPollingEnabled     !== this._orig.espnPollingEnabled      ||
+      this.defaultWeekView        !== this._orig.defaultWeekView         ||
+      this.confidenceMode         !== this._orig.confidenceMode          ||
+      this.confidencePenalty      !== this._orig.confidencePenalty;
   }
 
   private save() {
@@ -57,29 +53,26 @@ export default class PicksSettingsTab extends Component {
       method: 'POST',
       url: app.forum.attribute('apiUrl') + '/settings',
       body: {
-        'resofire-picks.picks_lock_offset_minutes':  this.picksLockOffsetMinutes,
-        'resofire-picks.espn_polling_enabled':        this.espnPollingEnabled ? '1' : '0',
-        'resofire-picks.espn_poll_interval_minutes': this.espnPollIntervalMinutes,
+        'resofire-picks.picks_lock_offset_minutes': this.picksLockOffsetMinutes,
+        'resofire-picks.espn_polling_enabled':       this.espnPollingEnabled ? '1' : '0',
         'resofire-picks.default_week_view':          this.defaultWeekView,
         'resofire-picks.confidence_mode':            this.confidenceMode ? '1' : '0',
         'resofire-picks.confidence_penalty':         this.confidencePenalty,
       },
     }).then(() => {
-      app.data.settings['resofire-picks.picks_lock_offset_minutes']  = this.picksLockOffsetMinutes;
-      app.data.settings['resofire-picks.espn_polling_enabled']        = this.espnPollingEnabled ? '1' : '0';
-      app.data.settings['resofire-picks.espn_poll_interval_minutes'] = this.espnPollIntervalMinutes;
-      app.data.settings['resofire-picks.default_week_view']          = this.defaultWeekView;
-      app.data.settings['resofire-picks.confidence_mode']            = this.confidenceMode ? '1' : '0';
-      app.data.settings['resofire-picks.confidence_penalty']         = this.confidencePenalty;
+      app.data.settings['resofire-picks.picks_lock_offset_minutes'] = this.picksLockOffsetMinutes;
+      app.data.settings['resofire-picks.espn_polling_enabled']       = this.espnPollingEnabled ? '1' : '0';
+      app.data.settings['resofire-picks.default_week_view']         = this.defaultWeekView;
+      app.data.settings['resofire-picks.confidence_mode']           = this.confidenceMode ? '1' : '0';
+      app.data.settings['resofire-picks.confidence_penalty']        = this.confidencePenalty;
       this.saving = false;
       this.dirty = false;
       this._orig = {
-        picksLockOffsetMinutes:  this.picksLockOffsetMinutes,
-        espnPollingEnabled:      this.espnPollingEnabled,
-        espnPollIntervalMinutes: this.espnPollIntervalMinutes,
-        defaultWeekView:         this.defaultWeekView,
-        confidenceMode:          this.confidenceMode,
-        confidencePenalty:       this.confidencePenalty,
+        picksLockOffsetMinutes: this.picksLockOffsetMinutes,
+        espnPollingEnabled:     this.espnPollingEnabled,
+        defaultWeekView:        this.defaultWeekView,
+        confidenceMode:         this.confidenceMode,
+        confidencePenalty:      this.confidencePenalty,
       };
       this.saveResult = '✅ Settings saved.';
       m.redraw();
@@ -211,28 +204,6 @@ export default class PicksSettingsTab extends Component {
               {app.translator.trans('resofire-picks.admin.settings.espn_polling_help')}
             </p>
           </div>
-
-          {this.espnPollingEnabled && (
-            <div className="Form-group">
-              <label>{app.translator.trans('resofire-picks.admin.settings.poll_interval')}</label>
-              <div className="PicksInputRow">
-                <input
-                  className="FormControl PicksInputRow-input"
-                  type="number"
-                  min="1"
-                  max="60"
-                  value={this.espnPollIntervalMinutes}
-                  oninput={(e: InputEvent) => { this.espnPollIntervalMinutes = (e.target as HTMLInputElement).value; this.checkDirty(); }}
-                />
-                <span className="PicksInputRow-label">
-                  {app.translator.trans('resofire-picks.admin.settings.minutes')}
-                </span>
-              </div>
-              <p className="helpText">
-                {app.translator.trans('resofire-picks.admin.settings.poll_interval_help')}
-              </p>
-            </div>
-          )}
 
           <div className="Form-group">
             <p className="helpText PicksHelpNote">
