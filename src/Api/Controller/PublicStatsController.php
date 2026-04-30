@@ -194,7 +194,7 @@ class PublicStatsController implements RequestHandlerInterface
                     ->groupBy('football_team')
                     ->selectRaw('football_team, COUNT(*) as fan_count')
                     ->orderByDesc('fan_count')
-                    ->limit(5)
+                    ->limit(10)
                     ->get();
 
                 $baseUrl = rtrim($this->settings->get('url', ''), '/');
