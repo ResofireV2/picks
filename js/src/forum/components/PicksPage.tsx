@@ -44,6 +44,7 @@ interface WeekInfo {
   season_type: string;
   start_date: string | null;
   end_date: string | null;
+  is_open: boolean;
 }
 
 interface LeaderboardEntry {
@@ -91,6 +92,7 @@ export default class PicksPage extends Page {
           season_type: w.seasonType(),
           start_date: w.startDate(),
           end_date: w.endDate(),
+          is_open: w.isOpen() ?? false,
         }))
         .sort((a, b) => {
           if (a.season_type !== b.season_type) return a.season_type === 'regular' ? -1 : 1;
@@ -105,8 +107,14 @@ export default class PicksPage extends Page {
 
       if (weekIdParam && this.weeks.find(w => w.id === weekIdParam)) {
         this.currentWeekId = weekIdParam;
-      } else if (this.weeks.length > 0) {
-        this.currentWeekId = this.weeks[0].id;
+      } else {
+        // Default to the first open week, or the last week if none are open
+        const openWeek = this.weeks.find(w => w.is_open);
+        if (openWeek) {
+          this.currentWeekId = openWeek.id;
+        } else if (this.weeks.length > 0) {
+          this.currentWeekId = this.weeks[this.weeks.length - 1].id;
+        }
       }
 
       if (this.currentWeekId) {
