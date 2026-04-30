@@ -108,10 +108,11 @@ export default class PicksPage extends Page {
       if (weekIdParam && this.weeks.find(w => w.id === weekIdParam)) {
         this.currentWeekId = weekIdParam;
       } else {
-        // Default to the first open week, or the last week if none are open
-        const openWeek = this.weeks.find(w => w.is_open);
-        if (openWeek) {
-          this.currentWeekId = openWeek.id;
+        // Default to the last open week (highest week number that is open)
+        // This handles the case where multiple weeks are open after auto-unlock
+        const openWeeks = this.weeks.filter(w => w.is_open);
+        if (openWeeks.length > 0) {
+          this.currentWeekId = openWeeks[openWeeks.length - 1].id;
         } else if (this.weeks.length > 0) {
           this.currentWeekId = this.weeks[this.weeks.length - 1].id;
         }
