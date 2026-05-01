@@ -177,30 +177,30 @@ class UserHistoryController implements RequestHandlerInterface
                         ->count();
                 }
 
-                // All weeks in this season that the user has scores for
-                $weekScores = DB::table('picks_user_scores')
-                    ->join('picks_weeks', 'picks_user_scores.week_id', '=', 'picks_weeks.id')
-                    ->where('picks_user_scores.user_id', $userId)
+                // All weeks in this season — left join user scores so every week
+                // appears regardless of whether the user has picks yet.
+                $weekScores = DB::table('picks_weeks')
+                    ->leftJoin('picks_user_scores', function ($join) use ($userId) {
+                        $join->on('picks_user_scores.week_id', '=', 'picks_weeks.id')
+                             ->where('picks_user_scores.user_id', '=', $userId);
+                    })
                     ->where('picks_weeks.season_id', $season->id)
-                    ->whereNotNull('picks_user_scores.week_id')
+                    ->orderByRaw("CASE picks_weeks.season_type WHEN 'regular' THEN 0 ELSE 1 END")
                     ->orderByDesc('picks_weeks.week_number')
                     ->select([
-                        'picks_user_scores.id',
-                        'picks_user_scores.user_id',
-                        'picks_user_scores.season_id',
-                        'picks_user_scores.week_id',
-                        'picks_user_scores.total_picks',
-                        'picks_user_scores.correct_picks',
-                        'picks_user_scores.total_points',
-                        'picks_user_scores.accuracy',
+                        'picks_weeks.id as week_id',
                         'picks_weeks.name as week_name',
                         'picks_weeks.week_number',
+                        DB::raw('COALESCE(picks_user_scores.total_picks, 0) as total_picks'),
+                        DB::raw('COALESCE(picks_user_scores.correct_picks, 0) as correct_picks'),
+                        DB::raw('COALESCE(picks_user_scores.total_points, 0) as total_points'),
+                        DB::raw('COALESCE(picks_user_scores.accuracy, 0.00) as accuracy'),
                     ])
                     ->get();
 
                 $weeksData = [];
                 foreach ($weekScores as $ws) {
-                    // Week rank
+                    // Week rank — only calculated if user has picks
                     $weekRank = null;
                     if ($ws->total_picks > 0) {
                         $above = DB::table('picks_user_scores')
