@@ -985,25 +985,26 @@
 @media (min-width: 768px) {
   .AvocadoExtensionPage-header ~ .PicksPage-inner {
     max-width: 100%;
+  }
 
-    .PicksTab {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      column-gap: 16px;
-    }
+  // Apply the two-column grid directly on PicksTab so only its direct children
+  // become grid items — PicksGameCard cards fill the columns, everything else
+  // (week nav, status bar, locked notice, empty state, loaders) spans both columns.
+  .AvocadoExtensionPage-header ~ .PicksPage-inner .PicksTab {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
 
-    // Week nav, status bar, locked notice, empty state, and leaderboard
-    // span both columns so they sit above/below the game grid correctly
-    .PicksWeekNav,
-    .PicksStatusBar,
-    .PicksWeekLocked,
-    .PicksEmpty,
-    .PicksLeaderboard,
-    .PicksLbScopes,
-    .PicksHistory-stack,
-    .PicksMyPickRow,
-    .PicksHistory-season,
-    .LoadingIndicator {
+    // These are direct children of PicksTab that must span both columns
+    > .PicksWeekNav,
+    > .PicksStatusBar,
+    > .PicksWeekLocked,
+    > .PicksEmpty,
+    > .PicksLeaderboard,
+    > .PicksLbScopes,
+    > .PicksHistory-stack,
+    > .PicksHistory-season,
+    > .LoadingIndicator {
       grid-column: 1 / -1;
     }
   }
