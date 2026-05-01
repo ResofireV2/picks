@@ -974,38 +974,3 @@
   .PicksHistory-winner { display: none; }
 }
 
-// ── Avocado theme: two-column game card layout ────────────────────────────────
-// Avocado removes the sidebar on all non-Discussion pages, giving the Picks page
-// the full container width (~1320px). Below 768px (Flarum @phone breakpoint) the
-// layout reverts to the default single-column to preserve the mobile experience.
-//
-// Selector: .AvocadoExtensionPage-header is injected as a sibling of .PicksPage-inner
-// only when Avocado is active, so this rule is fully scoped to that theme.
-
-@media (min-width: 768px) {
-  // Target the Picks page when Avocado is active.
-  // Avocado injects .AvocadoExtensionPage-header inside .Page-content alongside
-  // .PicksPage-inner. We use :has() to scope to that context without relying on
-  // sibling combinators across Mithril-rendered vnodes.
-  .Page-content:has(.AvocadoExtensionPage-header) .PicksPage-inner {
-    max-width: 100%;
-  }
-
-  .Page-content:has(.AvocadoExtensionPage-header) .PicksTab {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 16px;
-
-    > .PicksWeekNav,
-    > .PicksStatusBar,
-    > .PicksWeekLocked,
-    > .PicksEmpty,
-    > .PicksLeaderboard,
-    > .PicksLbScopes,
-    > .PicksHistory-stack,
-    > .PicksHistory-season,
-    > .LoadingIndicator {
-      grid-column: 1 / -1;
-    }
-  }
-}
