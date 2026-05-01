@@ -38,5 +38,14 @@ export default [
         allowGuest: true,
       }),
       'view'
+    )
+    // ── New: controls visibility of member pick history profiles ──────────────
+    .permission(
+      () => ({
+        icon: 'fas fa-history',
+        label: app.translator.trans('resofire-picks.admin.permissions.view_history'),
+        permission: 'picks.viewHistory',
+      }),
+      'view'
     ),
 ];

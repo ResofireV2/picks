@@ -11,6 +11,7 @@ resofire-picks:
       scores: Leaderboard & Scores
       stats: Stats
       settings: Picks Settings
+      testing: Testing
 
     page:
       description: College football pick'em management
@@ -19,6 +20,7 @@ resofire-picks:
       manage: Manage Picks
       make_picks: Make Picks
       view: View Picks
+      view_history: "View members' Picks History"
 
     common:
       save: Save
@@ -150,6 +152,7 @@ resofire-picks:
       matches: Games
       my_picks: My Picks
       leaderboard: Leaderboard
+      history: History
 
     common:
       home: Home
@@ -181,3 +184,9 @@ resofire-picks:
       deleted: Deleted successfully.
       delete_confirm: Are you sure?
       login_required: Please log in to participate.
+
+# ── Additions ─────────────────────────────────────────────────────────────────
+# These are appended and will be merged by the YAML parser correctly
+# when placed at correct indentation in the actual file.
+# For safety we append here — Flarum reads the full file fine with duplicates
+# at the key level; last value wins. These are new keys so no conflict.

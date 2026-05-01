@@ -19,6 +19,10 @@ use Resofire\Picks\Api\Controller\SyncTeamsController;
 use Resofire\Picks\Api\Controller\PublicStatsController;
 use Resofire\Picks\Api\Controller\StatsController;
 use Resofire\Picks\Api\Controller\SubmitPickController;
+use Resofire\Picks\Api\Controller\UserScoresController;
+use Resofire\Picks\Api\Controller\UserHistoryController;
+use Resofire\Picks\Api\Controller\LeaderboardHistoryController;
+use Resofire\Picks\Api\Controller\SeedTestDataController;
 use Resofire\Picks\Api\ForumPicksAttributes;
 use Resofire\Picks\Api\Resource\EventResource;
 use Resofire\Picks\Api\Resource\SeasonResource;
@@ -42,7 +46,8 @@ return [
         ->js(__DIR__.'/js/dist/forum.js')
         ->css(__DIR__.'/resources/less/forum.less')
         ->route('/picks', 'picks')
-        ->route('/picks/week/{weekId}', 'picks.week'),
+        ->route('/picks/week/{weekId}', 'picks.week')
+        ->route('/u/{username}/picks-history', 'user.picks-history'),
 
     (new Extend\Frontend('admin'))
         ->js(__DIR__.'/js/dist/admin.js')
@@ -98,25 +103,26 @@ return [
     // Custom API routes (non-resource actions)
     // -------------------------------------------------------------------------
     (new Extend\Routes('api'))
-        ->get('/picks/events', 'picks.events.index', ListEventsController::class)
-        ->get('/picks/my-picks', 'picks.my-picks', ListPicksController::class)
-        ->get('/picks/leaderboard', 'picks.leaderboard', ListLeaderboardController::class)
-        ->post('/picks/submit', 'picks.submit', SubmitPickController::class)
-        ->delete('/picks/events/{id}/pick', 'picks.pick.delete', DeletePickController::class)
-        ->post('/picks/weeks/{id}/open', 'picks.weeks.open', WeekOpenController::class)
-        ->post('/picks/sync/teams', 'picks.sync.teams', SyncTeamsController::class)
-        ->post('/picks/sync/logos', 'picks.sync.logos', SyncLogosController::class)
-        ->post('/picks/sync/schedule', 'picks.sync.schedule', SyncScheduleController::class)
-        ->post('/picks/sync/scores', 'picks.sync.scores', SyncScoresController::class)
-        ->get('/picks/stats', 'picks.stats', StatsController::class)
-        ->get('/picks/public-stats', 'picks.public-stats', PublicStatsController::class)
-        ->post('/picks/reset', 'picks.reset', ResetDataController::class)
-        ->post('/picks/events/{id}/result', 'picks.events.result', EnterResultController::class)
-        ->post('/picks/teams/{id}/refresh-logo', 'picks.teams.refresh-logo', RefreshTeamLogoController::class),
-
-    // Note: No separate admin frontend route needed — PicksPage extends
-    // ExtensionPage and is registered via Extend\Admin().page(), so it
-    // renders directly in the admin dashboard extension card.
+        ->get('/picks/events',              'picks.events.index',         ListEventsController::class)
+        ->get('/picks/my-picks',            'picks.my-picks',             ListPicksController::class)
+        ->get('/picks/leaderboard',         'picks.leaderboard',          ListLeaderboardController::class)
+        ->post('/picks/submit',             'picks.submit',               SubmitPickController::class)
+        ->delete('/picks/events/{id}/pick', 'picks.pick.delete',          DeletePickController::class)
+        ->post('/picks/weeks/{id}/open',    'picks.weeks.open',           WeekOpenController::class)
+        ->post('/picks/sync/teams',         'picks.sync.teams',           SyncTeamsController::class)
+        ->post('/picks/sync/logos',         'picks.sync.logos',           SyncLogosController::class)
+        ->post('/picks/sync/schedule',      'picks.sync.schedule',        SyncScheduleController::class)
+        ->post('/picks/sync/scores',        'picks.sync.scores',          SyncScoresController::class)
+        ->get('/picks/stats',               'picks.stats',                StatsController::class)
+        ->get('/picks/public-stats',        'picks.public-stats',         PublicStatsController::class)
+        ->post('/picks/reset',              'picks.reset',                ResetDataController::class)
+        ->post('/picks/events/{id}/result', 'picks.events.result',        EnterResultController::class)
+        ->post('/picks/teams/{id}/refresh-logo', 'picks.teams.refresh-logo', RefreshTeamLogoController::class)
+        // ── New routes ────────────────────────────────────────────────────────
+        ->get('/picks/user-scores',         'picks.user-scores',         UserScoresController::class)
+        ->get('/picks/user-history',        'picks.user-history',        UserHistoryController::class)
+        ->get('/picks/leaderboard-history', 'picks.leaderboard-history', LeaderboardHistoryController::class)
+        ->post('/picks/seed-test-data',     'picks.seed-test-data',      SeedTestDataController::class),
 
     // -------------------------------------------------------------------------
     // Console commands

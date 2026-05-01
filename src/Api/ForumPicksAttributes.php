@@ -40,6 +40,12 @@ class ForumPicksAttributes
                 ->get(fn (object $model, Context $context) =>
                     app('flarum.settings')->get('resofire-picks.confidence_penalty', 'none')
                 ),
+
+            // ── New: whether the current actor can view other members' pick history ──
+            Schema\Boolean::make('picksCanViewHistory')
+                ->get(fn (object $model, Context $context) =>
+                    $context->getActor()->hasPermission('picks.viewHistory')
+                ),
         ];
     }
 }

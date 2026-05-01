@@ -9,6 +9,7 @@ import SyncSettingsTab from './SyncSettingsTab';
 import PicksSettingsTab from './PicksSettingsTab';
 import LeaderboardTab from './LeaderboardTab';
 import StatsTab from './StatsTab';
+import TestingTab from './TestingTab';
 
 export default class PicksPage extends ExtensionPage {
   private activeTab: string = 'teams';
@@ -17,7 +18,7 @@ export default class PicksPage extends ExtensionPage {
     super.oninit(vnode);
 
     const param = m.route.param('tab');
-    const validTabs = ['teams', 'sync', 'seasons', 'games', 'scores', 'settings'];
+    const validTabs = ['teams', 'sync', 'seasons', 'games', 'scores', 'settings', 'testing'];
     if (param && validTabs.includes(param)) {
       this.activeTab = param;
     }
@@ -36,6 +37,7 @@ export default class PicksPage extends ExtensionPage {
               {this.renderTab('scores',   'fas fa-trophy',       'resofire-picks.admin.nav.scores')}
               {this.renderTab('stats',    'fas fa-chart-bar',    'resofire-picks.admin.nav.stats')}
               {this.renderTab('settings', 'fas fa-cog',          'resofire-picks.admin.nav.settings')}
+              {this.renderTab('testing',  'fas fa-flask',        'resofire-picks.admin.nav.testing')}
             </div>
 
             <div className="PicksAdminPage-content">
@@ -81,6 +83,8 @@ export default class PicksPage extends ExtensionPage {
         return <PicksSettingsTab />;
       case 'scores':
         return <LeaderboardTab />;
+      case 'testing':
+        return <TestingTab />;
       default:
         return <TeamsTab />;
     }

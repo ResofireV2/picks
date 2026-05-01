@@ -62,6 +62,28 @@ interface LeaderboardEntry {
   is_me: boolean;
 }
 
+// ── History tab interfaces ─────────────────────────────────────────────────────
+
+interface LeaderboardHistoryEntry {
+  rank: number;
+  user_id: number;
+  username: string;
+  display_name: string;
+  avatar_url: string | null;
+  total_picks: number;
+  correct_picks: number;
+  total_points: number;
+  accuracy: number;
+}
+
+interface LeaderboardHistorySeason {
+  season_id: number;
+  name: string;
+  year: number;
+  standings: LeaderboardHistoryEntry[];
+}
+
+
 export default class PicksPage extends Page {
   private activeTab: string = 'matches';
   private weeks: WeekInfo[] = [];
@@ -76,6 +98,12 @@ export default class PicksPage extends Page {
   private lbScope: string = 'week';
   private seasonId: number | null = null;
   private weeksMeta: { total_picks?: number; picked?: number } = {};
+
+  // ── History tab state ────────────────────────────────────────────────────
+  private lbHistory: LeaderboardHistorySeason[] = [];
+  private lbHistoryLoading: boolean = false;
+  private lbHistoryExpandedSeasons: Set<number> = new Set();
+
 
   oninit(vnode: Mithril.Vnode) {
     super.oninit(vnode);
@@ -602,6 +630,124 @@ export default class PicksPage extends Page {
     );
   }
 
+
+  // ── Leaderboard history methods ───────────────────────────────────────────
+
+  private loadLeaderboardHistory() {
+    if (this.lbHistoryLoading || this.lbHistory.length > 0) return;
+    this.lbHistoryLoading = true;
+    m.redraw();
+
+    app.request<{ seasons: LeaderboardHistorySeason[] }>({
+      method: 'GET',
+      url: app.forum.attribute('apiUrl') + '/picks/leaderboard-history',
+    }).then((r) => {
+      this.lbHistory        = r.seasons || [];
+      this.lbHistoryLoading = false;
+      if (this.lbHistory.length > 0) {
+        this.lbHistoryExpandedSeasons.add(this.lbHistory[0].season_id);
+      }
+      m.redraw();
+    }).catch(() => {
+      this.lbHistoryLoading = false;
+      m.redraw();
+    });
+  }
+
+  private renderHistoryTab(): Mithril.Children {
+    return (
+      <div className="PicksTab">
+        {this.lbHistoryLoading && <LoadingIndicator />}
+
+        {!this.lbHistoryLoading && this.lbHistory.length === 0 && (
+          <div className="PicksEmpty">No completed seasons yet. History will appear here after the first season ends.</div>
+        )}
+
+        {!this.lbHistoryLoading && this.lbHistory.length > 0 && (
+          <div className="PicksHistory-stack">
+            {this.lbHistory.map(season => {
+              const isExpanded = this.lbHistoryExpandedSeasons.has(season.season_id);
+
+              return (
+                <div className="PicksHistory-season" key={String(season.season_id)}>
+                  <div
+                    className="PicksHistory-seasonHeader"
+                    onclick={() => {
+                      if (isExpanded) {
+                        this.lbHistoryExpandedSeasons.delete(season.season_id);
+                      } else {
+                        this.lbHistoryExpandedSeasons.add(season.season_id);
+                      }
+                      m.redraw();
+                    }}
+                  >
+                    <div className="PicksHistory-seasonLeft">
+                      <span className="PicksHistory-yearBadge">{season.year}</span>
+                      <div className="PicksHistory-seasonName">{season.name}</div>
+                      <div className="PicksHistory-seasonCount">{season.standings.length} players</div>
+                    </div>
+                    <div className="PicksHistory-seasonRight">
+                      {season.standings.length > 0 && (
+                        <span className="PicksHistory-winner">
+                          🥇 {season.standings[0].display_name}
+                        </span>
+                      )}
+                      <span className={`PicksHistory-chevron ${isExpanded ? 'PicksHistory-chevron--open' : ''}`}>
+                        &#8964;
+                      </span>
+                    </div>
+                  </div>
+
+                  {isExpanded && (
+                    <div className="PicksHistory-seasonBody">
+                      {season.standings.length === 0 ? (
+                        <div className="PicksEmpty" style="padding: 1rem;">No standings recorded for this season.</div>
+                      ) : (
+                        <div className="PicksLeaderboard">
+                          <div className="PicksLeaderboard-head">
+                            <div>#</div>
+                            <div>{app.translator.trans('resofire-picks.lib.common.team')}</div>
+                            <div className="PicksLeaderboard-right">Pts</div>
+                            <div className="PicksLeaderboard-right">W–L</div>
+                            <div className="PicksLeaderboard-right">Acc</div>
+                          </div>
+                          {season.standings.map(entry => (
+                            <div
+                              className={`PicksLeaderboard-row
+                                ${entry.rank === 1 ? 'PicksLeaderboard-row--gold' : ''}
+                                ${entry.rank === 2 ? 'PicksLeaderboard-row--silver' : ''}
+                                ${entry.rank === 3 ? 'PicksLeaderboard-row--bronze' : ''}
+                              `}
+                              key={String(entry.user_id)}
+                            >
+                              <div className={`PicksLeaderboard-rank ${entry.rank === 1 ? 'PicksLeaderboard-rank--gold' : ''}`}>
+                                {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : entry.rank}
+                              </div>
+                              <div className="PicksLeaderboard-user">
+                                {entry.avatar_url
+                                  ? <img src={entry.avatar_url} alt={entry.display_name} className="PicksAvatar" />
+                                  : <div className="PicksAvatar PicksAvatar--initials">{(entry.display_name || '?').charAt(0)}</div>
+                                }
+                                <span>{entry.display_name}</span>
+                              </div>
+                              <div className="PicksLeaderboard-right PicksLeaderboard-pts">{entry.total_points}</div>
+                              <div className="PicksLeaderboard-right PicksLeaderboard-wl">{entry.correct_picks}–{entry.total_picks - entry.correct_picks}</div>
+                              <div className="PicksLeaderboard-right PicksLeaderboard-acc">{entry.accuracy.toFixed(0)}%</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   view() {
     const canView = app.forum.attribute('picksCanView') || app.session.user?.isAdmin();
 
@@ -610,9 +756,10 @@ export default class PicksPage extends Page {
         <div className="PicksPage-inner">
           <div className="PicksPage-tabs">
             {[
-              { key: 'matches', label: app.translator.trans('resofire-picks.lib.nav.matches'), icon: 'fas fa-football' },
-              { key: 'mypicks', label: app.translator.trans('resofire-picks.lib.nav.my_picks'), icon: 'fas fa-check-circle' },
+              { key: 'matches',     label: app.translator.trans('resofire-picks.lib.nav.matches'),     icon: 'fas fa-football' },
+              { key: 'mypicks',     label: app.translator.trans('resofire-picks.lib.nav.my_picks'),    icon: 'fas fa-check-circle' },
               { key: 'leaderboard', label: app.translator.trans('resofire-picks.lib.nav.leaderboard'), icon: 'fas fa-trophy' },
+              { key: 'history',     label: app.translator.trans('resofire-picks.lib.nav.history'),     icon: 'fas fa-history' },
             ].map(tab => (
               <button
                 key={tab.key}
@@ -621,6 +768,9 @@ export default class PicksPage extends Page {
                   this.activeTab = tab.key;
                   if (tab.key === 'leaderboard' && this.leaderboard.length === 0) {
                     this.loadLeaderboard();
+                  }
+                  if (tab.key === 'history') {
+                    this.loadLeaderboardHistory();
                   }
                   m.redraw();
                 }}
@@ -635,7 +785,7 @@ export default class PicksPage extends Page {
             <div className="PicksEmpty">{app.translator.trans('resofire-picks.lib.messages.login_required')}</div>
           ) : !this.weeksLoaded ? (
             <LoadingIndicator />
-          ) : this.weeks.length === 0 ? (
+          ) : this.weeks.length === 0 && this.activeTab !== 'history' ? (
             <div className="PicksEmpty PicksEmpty--noSchedule">
               <i className="fas fa-football" />
               <p>No schedule has been imported yet.</p>
@@ -643,9 +793,10 @@ export default class PicksPage extends Page {
             </div>
           ) : (
             <>
-              {this.activeTab === 'matches' && this.renderMatchesTab()}
-              {this.activeTab === 'mypicks' && this.renderMyPicksTab()}
+              {this.activeTab === 'matches'     && this.renderMatchesTab()}
+              {this.activeTab === 'mypicks'     && this.renderMyPicksTab()}
               {this.activeTab === 'leaderboard' && this.renderLeaderboardTab()}
+              {this.activeTab === 'history'     && this.renderHistoryTab()}
             </>
           )}
         </div>
