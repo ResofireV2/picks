@@ -46,13 +46,21 @@ class UserHistoryController implements RequestHandlerInterface
                 ->orderByDesc('year')
                 ->get();
 
-            // ── Current open week (to flag in-progress) ───────────────────────
-            $openWeek = DB::table('picks_weeks')
-                ->where('is_open', true)
-                ->orderByDesc('week_number')
+            // ── Current season (has at least one unfinished game) ────────────
+            // Uses event status rather than is_open, which may stay true on
+            // past weeks after auto-unlock.
+            $currentWeek = DB::table('picks_weeks')
+                ->whereExists(function ($q) {
+                    $q->select(DB::raw(1))
+                      ->from('picks_events')
+                      ->whereColumn('picks_events.week_id', 'picks_weeks.id')
+                      ->whereIn('picks_events.status', ['scheduled', 'in_progress']);
+                })
+                ->orderByRaw("CASE season_type WHEN 'regular' THEN 0 ELSE 1 END")
+                ->orderBy('week_number', 'desc')
                 ->first();
 
-            $currentSeasonId = $openWeek?->season_id ?? null;
+            $currentSeasonId = $currentWeek?->season_id ?? null;
 
             // ── All-time stats ────────────────────────────────────────────────
             $alltimeRow = DB::table('picks_user_scores')

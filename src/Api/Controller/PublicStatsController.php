@@ -27,9 +27,14 @@ class PublicStatsController implements RequestHandlerInterface
         RequestUtil::getActor($request)->assertCan('picks.view');
 
         // ── Current week ─────────────────────────────────────────────────────
-        // Find the most recently opened week
-        $currentWeek = Week::where('is_open', true)
-            ->orderByDesc('week_number')
+        // A week is current if it has at least one game not yet finished.
+        // This is more reliable than is_open, which may stay true on past
+        // weeks after auto-unlock.
+        $currentWeek = Week::whereHas('events', function ($q) {
+                $q->whereIn('status', ['scheduled', 'in_progress']);
+            })
+            ->orderByRaw("CASE season_type WHEN 'regular' THEN 0 ELSE 1 END")
+            ->orderBy('week_number', 'desc')
             ->first();
 
         $currentWeekId   = $currentWeek?->id;

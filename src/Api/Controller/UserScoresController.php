@@ -35,9 +35,18 @@ class UserScoresController implements RequestHandlerInterface
 
         try {
             // ── Current week + season ─────────────────────────────────────────
+            // A week is current if it has at least one game not yet finished.
+            // This is more reliable than is_open, which may remain true on
+            // past weeks after auto-unlock.
             $currentWeek = DB::table('picks_weeks')
-                ->where('is_open', true)
-                ->orderByDesc('week_number')
+                ->whereExists(function ($q) {
+                    $q->select(DB::raw(1))
+                      ->from('picks_events')
+                      ->whereColumn('picks_events.week_id', 'picks_weeks.id')
+                      ->whereIn('picks_events.status', ['scheduled', 'in_progress']);
+                })
+                ->orderByRaw("CASE season_type WHEN 'regular' THEN 0 ELSE 1 END")
+                ->orderBy('week_number', 'desc')
                 ->first();
 
             $currentWeekId   = $currentWeek?->id ?? null;

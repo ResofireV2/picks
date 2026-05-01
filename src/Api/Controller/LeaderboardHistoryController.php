@@ -30,9 +30,21 @@ class LeaderboardHistoryController implements RequestHandlerInterface
         $actor->assertCan('picks.view');
 
         try {
-            // ── Identify the current season (has an open week) ────────────────
-            $openWeek        = DB::table('picks_weeks')->where('is_open', true)->first();
-            $currentSeasonId = $openWeek?->season_id ?? null;
+            // ── Identify the current season (has unfinished games) ───────────
+            // Uses event status rather than is_open, which may stay true on
+            // past weeks after auto-unlock.
+            $currentWeek = DB::table('picks_weeks')
+                ->whereExists(function ($q) {
+                    $q->select(DB::raw(1))
+                      ->from('picks_events')
+                      ->whereColumn('picks_events.week_id', 'picks_weeks.id')
+                      ->whereIn('picks_events.status', ['scheduled', 'in_progress']);
+                })
+                ->orderByRaw("CASE season_type WHEN 'regular' THEN 0 ELSE 1 END")
+                ->orderBy('week_number', 'desc')
+                ->first();
+
+            $currentSeasonId = $currentWeek?->season_id ?? null;
 
             // ── Load all seasons except the current one, newest first ─────────
             $seasonsQuery = DB::table('picks_seasons')->orderByDesc('year');
