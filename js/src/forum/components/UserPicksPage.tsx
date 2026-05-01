@@ -215,7 +215,10 @@ export default class UserPicksPage extends UserPage {
     }
 
     if (!s || s.total_picks === 0) {
-      const label = tab === 'alltime' ? 'yet' : tab === 'season' ? 'this season' : 'this week';
+      if (tab === 'week') {
+        return <div className="Picks-profile-empty">No results recorded this week yet.</div>;
+      }
+      const label = tab === 'alltime' ? 'yet' : 'this season';
       return <div className="Picks-profile-empty">No picks recorded {label}.</div>;
     }
 
