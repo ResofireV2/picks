@@ -23,6 +23,7 @@ interface UserScores {
 
 interface BestWeek {
   week_name: string;
+  season_year: number;
   accuracy: number;
   correct_picks: number;
   total_picks: number;
@@ -283,7 +284,7 @@ export default class UserPicksPage extends UserPage {
               <div className="StatCards-card-value" style="font-size: 18px;">
                 {alltime.best_week.week_name}
               </div>
-              <div className="StatCards-card-label">Best week</div>
+              <div className="StatCards-card-label">Best week · {alltime.best_week.season_year}</div>
               <div className="StatCards-profile-sub">
                 {alltime.best_week.correct_picks}/{alltime.best_week.total_picks} · {alltime.best_week.accuracy.toFixed(0)}%
               </div>

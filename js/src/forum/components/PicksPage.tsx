@@ -108,6 +108,8 @@ export default class PicksPage extends Page {
   oninit(vnode: Mithril.Vnode) {
     super.oninit(vnode);
 
+    app.setTitle(app.forum.attribute('picksNavLabel') || app.translator.trans('resofire-picks.lib.nav.picks'));
+
     const weekIdParam = parseInt(m.route.param('weekId'));
 
     // Load weeks first, then load games for the current/selected week

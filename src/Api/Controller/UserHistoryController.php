@@ -86,6 +86,7 @@ class UserHistoryController implements RequestHandlerInterface
             // ── Best single week ──────────────────────────────────────────────
             $bestWeekRow = DB::table('picks_user_scores')
                 ->join('picks_weeks', 'picks_user_scores.week_id', '=', 'picks_weeks.id')
+                ->join('picks_seasons', 'picks_weeks.season_id', '=', 'picks_seasons.id')
                 ->where('picks_user_scores.user_id', $userId)
                 ->whereNotNull('picks_user_scores.week_id')
                 ->where('picks_user_scores.total_picks', '>', 0)
@@ -101,7 +102,7 @@ class UserHistoryController implements RequestHandlerInterface
                     'picks_user_scores.total_points',
                     'picks_user_scores.accuracy',
                     'picks_weeks.name as week_name',
-                    'picks_weeks.season_id as week_season_id',
+                    'picks_seasons.year as season_year',
                 ])
                 ->first();
 
@@ -109,6 +110,7 @@ class UserHistoryController implements RequestHandlerInterface
             if ($bestWeekRow) {
                 $bestWeek = [
                     'week_name'     => $bestWeekRow->week_name,
+                    'season_year'   => (int) $bestWeekRow->season_year,
                     'accuracy'      => (float) $bestWeekRow->accuracy,
                     'correct_picks' => (int) $bestWeekRow->correct_picks,
                     'total_picks'   => (int) $bestWeekRow->total_picks,
