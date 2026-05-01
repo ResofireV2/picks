@@ -39,7 +39,7 @@ interface WeekHistory {
   week_id: number;
   week_name: string;
   week_number: number;
-  is_open: boolean;
+  is_current: boolean;
   total_picks: number;
   correct_picks: number;
   total_points: number;
@@ -400,7 +400,7 @@ export default class UserPicksPage extends UserPage {
                       <tr key={String(week.week_id)}>
                         <td>
                           <span className="Picks-week-name">{week.week_name}</span>
-                          {week.is_open && <span className="Picks-season-openBadge">Open</span>}
+                          {week.is_current && <span className="Picks-season-openBadge">Active</span>}
                         </td>
                         <td className="Picks-week-table-r">{week.correct_picks}</td>
                         <td className="Picks-week-table-r">{week.total_picks - week.correct_picks}</td>

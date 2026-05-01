@@ -61,6 +61,7 @@ class UserHistoryController implements RequestHandlerInterface
                 ->first();
 
             $currentSeasonId = $currentWeek?->season_id ?? null;
+            $currentWeekId   = $currentWeek?->id ?? null;
 
             // ── All-time stats ────────────────────────────────────────────────
             $alltimeRow = DB::table('picks_user_scores')
@@ -175,7 +176,6 @@ class UserHistoryController implements RequestHandlerInterface
                         'picks_user_scores.accuracy',
                         'picks_weeks.name as week_name',
                         'picks_weeks.week_number',
-                        'picks_weeks.is_open',
                     ])
                     ->get();
 
@@ -196,7 +196,7 @@ class UserHistoryController implements RequestHandlerInterface
                         'week_id'       => (int) $ws->week_id,
                         'week_name'     => $ws->week_name,
                         'week_number'   => (int) $ws->week_number,
-                        'is_open'       => (bool) $ws->is_open,
+                        'is_current'    => ((int) $ws->week_id === (int) $currentWeekId),
                         'total_picks'   => (int) $ws->total_picks,
                         'correct_picks' => (int) $ws->correct_picks,
                         'total_points'  => (int) $ws->total_points,
