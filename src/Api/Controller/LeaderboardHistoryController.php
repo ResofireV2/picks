@@ -31,20 +31,20 @@ class LeaderboardHistoryController implements RequestHandlerInterface
 
         try {
             // ── Identify the current season (has unfinished games) ───────────
-            // Uses event status rather than is_open, which may stay true on
-            // past weeks after auto-unlock.
-            $currentWeek = DB::table('picks_weeks')
+            // Scoped to the most recent season with unfinished games so that
+            // future unplayed weeks in other seasons don't interfere.
+            $currentSeasonRow = DB::table('picks_seasons')
                 ->whereExists(function ($q) {
                     $q->select(DB::raw(1))
-                      ->from('picks_events')
-                      ->whereColumn('picks_events.week_id', 'picks_weeks.id')
+                      ->from('picks_weeks')
+                      ->join('picks_events', 'picks_events.week_id', '=', 'picks_weeks.id')
+                      ->whereColumn('picks_weeks.season_id', 'picks_seasons.id')
                       ->whereIn('picks_events.status', ['scheduled', 'in_progress']);
                 })
-                ->orderByRaw("CASE season_type WHEN 'regular' THEN 0 ELSE 1 END")
-                ->orderBy('week_number', 'desc')
+                ->orderByDesc('year')
                 ->first();
 
-            $currentSeasonId = $currentWeek?->season_id ?? null;
+            $currentSeasonId = $currentSeasonRow?->id ?? null;
 
             // ── Load all seasons except the current one, newest first ─────────
             $seasonsQuery = DB::table('picks_seasons')->orderByDesc('year');

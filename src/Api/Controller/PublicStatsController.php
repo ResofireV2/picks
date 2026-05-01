@@ -27,15 +27,29 @@ class PublicStatsController implements RequestHandlerInterface
         RequestUtil::getActor($request)->assertCan('picks.view');
 
         // ── Current week ─────────────────────────────────────────────────────
-        // A week is current if it has at least one game not yet finished.
-        // This is more reliable than is_open, which may stay true on past
-        // weeks after auto-unlock.
-        $currentWeek = Week::whereHas('events', function ($q) {
-                $q->whereIn('status', ['scheduled', 'in_progress']);
+        // Scoped to the most recent season with unfinished games so that
+        // future unplayed weeks in other seasons don't interfere.
+        $currentSeason = DB::table('picks_seasons')
+            ->whereExists(function ($q) {
+                $q->select(DB::raw(1))
+                  ->from('picks_weeks')
+                  ->join('picks_events', 'picks_events.week_id', '=', 'picks_weeks.id')
+                  ->whereColumn('picks_weeks.season_id', 'picks_seasons.id')
+                  ->whereIn('picks_events.status', ['scheduled', 'in_progress']);
             })
-            ->orderByRaw("CASE season_type WHEN 'regular' THEN 0 ELSE 1 END")
-            ->orderBy('week_number', 'desc')
+            ->orderByDesc('year')
             ->first();
+
+        $currentWeek = null;
+        if ($currentSeason) {
+            $currentWeek = Week::where('season_id', $currentSeason->id)
+                ->whereHas('events', function ($q) {
+                    $q->whereIn('status', ['scheduled', 'in_progress']);
+                })
+                ->orderByRaw("CASE season_type WHEN 'regular' THEN 0 ELSE 1 END")
+                ->orderBy('week_number', 'asc')
+                ->first();
+        }
 
         $currentWeekId   = $currentWeek?->id;
         $currentWeekName = $currentWeek?->name ?? null;

@@ -49,16 +49,35 @@ class UserHistoryController implements RequestHandlerInterface
             // ── Current season (has at least one unfinished game) ────────────
             // Uses event status rather than is_open, which may stay true on
             // past weeks after auto-unlock.
-            $currentWeek = DB::table('picks_weeks')
+            // Find the most recent season that has at least one unfinished game,
+            // then find the earliest unfinished week within that season.
+            // Scoping to a single season prevents future unplayed weeks in later
+            // seasons from being returned ahead of the true current week.
+            $currentSeason = DB::table('picks_seasons')
                 ->whereExists(function ($q) {
                     $q->select(DB::raw(1))
-                      ->from('picks_events')
-                      ->whereColumn('picks_events.week_id', 'picks_weeks.id')
+                      ->from('picks_weeks')
+                      ->join('picks_events', 'picks_events.week_id', '=', 'picks_weeks.id')
+                      ->whereColumn('picks_weeks.season_id', 'picks_seasons.id')
                       ->whereIn('picks_events.status', ['scheduled', 'in_progress']);
                 })
-                ->orderByRaw("CASE season_type WHEN 'regular' THEN 0 ELSE 1 END")
-                ->orderBy('week_number', 'desc')
+                ->orderByDesc('year')
                 ->first();
+
+            $currentWeek = null;
+            if ($currentSeason) {
+                $currentWeek = DB::table('picks_weeks')
+                    ->where('season_id', $currentSeason->id)
+                    ->whereExists(function ($q) {
+                        $q->select(DB::raw(1))
+                          ->from('picks_events')
+                          ->whereColumn('picks_events.week_id', 'picks_weeks.id')
+                          ->whereIn('picks_events.status', ['scheduled', 'in_progress']);
+                    })
+                    ->orderByRaw("CASE season_type WHEN 'regular' THEN 0 ELSE 1 END")
+                    ->orderBy('week_number', 'asc')
+                    ->first();
+            }
 
             $currentSeasonId = $currentWeek?->season_id ?? null;
             $currentWeekId   = $currentWeek?->id ?? null;

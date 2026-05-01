@@ -36,16 +36,33 @@ class LeaderboardContextController implements RequestHandlerInterface
         try {
             // ── Is the season currently active? ───────────────────────────────
             // A season is active if any week has unfinished (scheduled/in_progress) games.
-            $activeWeek = DB::table('picks_weeks')
+            // Find the most recent season with unfinished games, scoped so that
+            // future unplayed weeks in later seasons don't interfere.
+            $activeSeason = DB::table('picks_seasons')
                 ->whereExists(function ($q) {
                     $q->select(DB::raw(1))
-                      ->from('picks_events')
-                      ->whereColumn('picks_events.week_id', 'picks_weeks.id')
+                      ->from('picks_weeks')
+                      ->join('picks_events', 'picks_events.week_id', '=', 'picks_weeks.id')
+                      ->whereColumn('picks_weeks.season_id', 'picks_seasons.id')
                       ->whereIn('picks_events.status', ['scheduled', 'in_progress']);
                 })
-                ->orderByRaw("CASE season_type WHEN 'regular' THEN 0 ELSE 1 END")
-                ->orderBy('week_number', 'desc')
+                ->orderByDesc('year')
                 ->first();
+
+            $activeWeek = null;
+            if ($activeSeason) {
+                $activeWeek = DB::table('picks_weeks')
+                    ->where('season_id', $activeSeason->id)
+                    ->whereExists(function ($q) {
+                        $q->select(DB::raw(1))
+                          ->from('picks_events')
+                          ->whereColumn('picks_events.week_id', 'picks_weeks.id')
+                          ->whereIn('picks_events.status', ['scheduled', 'in_progress']);
+                    })
+                    ->orderByRaw("CASE season_type WHEN 'regular' THEN 0 ELSE 1 END")
+                    ->orderBy('week_number', 'asc')
+                    ->first();
+            }
 
             if ($activeWeek) {
                 // Season is active — no off-season context needed
