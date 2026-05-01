@@ -983,19 +983,19 @@
 // only when Avocado is active, so this rule is fully scoped to that theme.
 
 @media (min-width: 768px) {
-  .AvocadoExtensionPage-header ~ .PicksPage-inner {
+  // Target the Picks page when Avocado is active.
+  // Avocado injects .AvocadoExtensionPage-header inside .Page-content alongside
+  // .PicksPage-inner. We use :has() to scope to that context without relying on
+  // sibling combinators across Mithril-rendered vnodes.
+  .Page-content:has(.AvocadoExtensionPage-header) .PicksPage-inner {
     max-width: 100%;
   }
 
-  // Apply the two-column grid directly on PicksTab so only its direct children
-  // become grid items — PicksGameCard cards fill the columns, everything else
-  // (week nav, status bar, locked notice, empty state, loaders) spans both columns.
-  .AvocadoExtensionPage-header ~ .PicksPage-inner .PicksTab {
+  .Page-content:has(.AvocadoExtensionPage-header) .PicksTab {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 16px;
 
-    // These are direct children of PicksTab that must span both columns
     > .PicksWeekNav,
     > .PicksStatusBar,
     > .PicksWeekLocked,
