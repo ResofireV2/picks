@@ -21,6 +21,7 @@ use Resofire\Picks\Api\Controller\StatsController;
 use Resofire\Picks\Api\Controller\SubmitPickController;
 use Resofire\Picks\Api\Controller\UserScoresController;
 use Resofire\Picks\Api\Controller\UserHistoryController;
+use Resofire\Picks\Api\Controller\LeaderboardContextController;
 use Resofire\Picks\Api\Controller\LeaderboardHistoryController;
 use Resofire\Picks\Api\Controller\SeedTestDataController;
 use Resofire\Picks\Api\ForumPicksAttributes;
@@ -122,6 +123,7 @@ return [
         ->get('/picks/user-scores',         'picks.user-scores',         UserScoresController::class)
         ->get('/picks/user-history',        'picks.user-history',        UserHistoryController::class)
         ->get('/picks/leaderboard-history', 'picks.leaderboard-history', LeaderboardHistoryController::class)
+        ->get('/picks/leaderboard-context', 'picks.leaderboard-context', LeaderboardContextController::class)
         ->post('/picks/seed-test-data',     'picks.seed-test-data',      SeedTestDataController::class),
 
     // -------------------------------------------------------------------------

@@ -104,6 +104,18 @@ export default class PicksPage extends Page {
   private lbHistoryLoading: boolean = false;
   private lbHistoryExpandedSeasons: Set<number> = new Set();
 
+  // ── Off-season / retention state ─────────────────────────────────────────
+  private lbContext: {
+    is_active: boolean;
+    is_off_season: boolean;
+    retention_expired: boolean;
+    days_since_ended: number | null;
+    last_week_id: number | null;
+    last_season_id: number | null;
+    last_season_name: string | null;
+  } | null = null;
+  private lbContextLoading: boolean = false;
+
 
   oninit(vnode: Mithril.Vnode) {
     super.oninit(vnode);
@@ -184,14 +196,40 @@ export default class PicksPage extends Page {
   }
 
   private loadLeaderboard() {
-    // No weeks loaded yet — don't attempt the API call
-    if (this.lbScope === 'week' && !this.currentWeekId) {
-      this.lbLoading = false;
+    const isActive = !!this.currentWeekId || !!this.seasonId;
+
+    // If no active week/season, fetch context first to check off-season retention
+    if (!isActive && !this.lbContext && !this.lbContextLoading) {
+      this.loadLeaderboardContext(() => {
+        this.loadLeaderboard();
+      });
+      return;
+    }
+
+    // Resolve which IDs to use — active season or off-season retained IDs
+    const weekId   = this.currentWeekId   ?? this.lbContext?.last_week_id   ?? null;
+    const seasonId = this.seasonId        ?? this.lbContext?.last_season_id ?? null;
+    const isOffSeason   = this.lbContext?.is_off_season      ?? false;
+    const retentionExpired = this.lbContext?.retention_expired ?? false;
+
+    // Week/season scopes with no IDs and retention expired — show off-season state
+    if ((this.lbScope === 'week' || this.lbScope === 'season') && isOffSeason && retentionExpired) {
+      this.leaderboard = [];
+      this.lbLoading   = false;
       m.redraw();
       return;
     }
-    if (this.lbScope === 'season' && !this.seasonId) {
-      this.lbLoading = false;
+
+    // Week/season scopes with no IDs and no off-season data — no schedule yet
+    if (this.lbScope === 'week' && !weekId) {
+      this.leaderboard = [];
+      this.lbLoading   = false;
+      m.redraw();
+      return;
+    }
+    if (this.lbScope === 'season' && !seasonId) {
+      this.leaderboard = [];
+      this.lbLoading   = false;
       m.redraw();
       return;
     }
@@ -200,8 +238,8 @@ export default class PicksPage extends Page {
     m.redraw();
 
     const params: Record<string, any> = { scope: this.lbScope, limit: 25 };
-    if (this.lbScope === 'week' && this.currentWeekId) params.week_id = this.currentWeekId;
-    if (this.lbScope === 'season' && this.seasonId) params.season_id = this.seasonId;
+    if (this.lbScope === 'week'   && weekId)   params.week_id   = weekId;
+    if (this.lbScope === 'season' && seasonId) params.season_id = seasonId;
 
     app.request<{ data: LeaderboardEntry[]; meta: any }>({
       method: 'GET',
@@ -209,10 +247,10 @@ export default class PicksPage extends Page {
       params,
     }).then((r) => {
       this.leaderboard = r.data || [];
-      this.lbLoading = false;
+      this.lbLoading   = false;
       m.redraw();
     }).catch(() => {
-      this.lbLoading = false;
+      this.lbLoading   = false;
       m.redraw();
     });
   }
@@ -558,11 +596,42 @@ export default class PicksPage extends Page {
   }
 
   private renderLeaderboardTab(): Mithril.Children {
+    const isOffSeason      = this.lbContext?.is_off_season      ?? false;
+    const retentionExpired = this.lbContext?.retention_expired  ?? false;
+    const lastSeasonName   = this.lbContext?.last_season_name   ?? null;
+    const daysSinceEnded   = this.lbContext?.days_since_ended   ?? null;
+    const noSchedule       = !this.currentWeekId && !isOffSeason;
+
     const scopes = [
-      { key: 'week', label: app.translator.trans('resofire-picks.lib.common.week') },
-      { key: 'season', label: app.translator.trans('resofire-picks.lib.common.season') },
+      { key: 'week',    label: app.translator.trans('resofire-picks.lib.common.week') },
+      { key: 'season',  label: app.translator.trans('resofire-picks.lib.common.season') },
       { key: 'alltime', label: 'All Time' },
     ];
+
+    // During off-season retention, label the scope buttons to clarify they show final standings
+    const scopeLabel = (key: string) => {
+      if (isOffSeason && !retentionExpired && key !== 'alltime') {
+        return key === 'week'
+          ? 'Final Week'
+          : (lastSeasonName ?? app.translator.trans('resofire-picks.lib.common.season'));
+      }
+      return key === 'week'
+        ? app.translator.trans('resofire-picks.lib.common.week')
+        : key === 'season'
+          ? app.translator.trans('resofire-picks.lib.common.season')
+          : 'All Time';
+    };
+
+    const emptyMessage = () => {
+      if (noSchedule) return 'No schedule has been imported yet. Check back soon!';
+      if (isOffSeason && retentionExpired) {
+        return `The ${lastSeasonName ?? 'season'} has ended. Final standings are available in the History tab.`;
+      }
+      if (isOffSeason && !retentionExpired && daysSinceEnded !== null) {
+        return `Final standings · ${lastSeasonName ?? 'Season'} ended ${daysSinceEnded} day${daysSinceEnded !== 1 ? 's' : ''} ago`;
+      }
+      return app.translator.trans('resofire-picks.lib.messages.no_data') as string;
+    };
 
     return (
       <div className="PicksTab">
@@ -573,19 +642,23 @@ export default class PicksPage extends Page {
               className={`PicksLbScope ${this.lbScope === s.key ? 'PicksLbScope--active' : ''}`}
               onclick={() => { this.lbScope = s.key; this.loadLeaderboard(); }}
             >
-              {s.label}
+              {scopeLabel(s.key)}
             </button>
           ))}
         </div>
 
+        {isOffSeason && !retentionExpired && (
+          <div className="PicksOffSeasonBanner">
+            <i className="fas fa-flag-checkered" />
+            {' '}Season complete · Final standings locked
+            {daysSinceEnded !== null && ` · ${daysSinceEnded}d ago`}
+          </div>
+        )}
+
         {this.lbLoading
           ? <LoadingIndicator />
           : this.leaderboard.length === 0
-            ? <div className="PicksEmpty">
-                {!this.currentWeekId
-                  ? 'No schedule has been imported yet. Check back soon!'
-                  : app.translator.trans('resofire-picks.lib.messages.no_data')}
-              </div>
+            ? <div className="PicksEmpty">{emptyMessage()}</div>
             : (
               <div className="PicksLeaderboard">
                 <div className="PicksLeaderboard-head">
@@ -634,6 +707,31 @@ export default class PicksPage extends Page {
 
 
   // ── Leaderboard history methods ───────────────────────────────────────────
+
+  private loadLeaderboardContext(onComplete: () => void) {
+    if (this.lbContextLoading) return;
+    this.lbContextLoading = true;
+
+    app.request<{
+      is_active: boolean;
+      is_off_season: boolean;
+      retention_expired: boolean;
+      days_since_ended: number | null;
+      last_week_id: number | null;
+      last_season_id: number | null;
+      last_season_name: string | null;
+    }>({
+      method: 'GET',
+      url: app.forum.attribute('apiUrl') + '/picks/leaderboard-context',
+    }).then((r) => {
+      this.lbContext        = r;
+      this.lbContextLoading = false;
+      onComplete();
+    }).catch(() => {
+      this.lbContextLoading = false;
+      onComplete();
+    });
+  }
 
   private loadLeaderboardHistory() {
     if (this.lbHistoryLoading || this.lbHistory.length > 0) return;
