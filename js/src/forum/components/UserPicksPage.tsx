@@ -219,8 +219,10 @@ export default class UserPicksPage extends UserPage {
       if (tab === 'week') {
         return <div className="Picks-profile-empty">No results recorded this week yet.</div>;
       }
-      const label = tab === 'alltime' ? 'yet' : 'this season';
-      return <div className="Picks-profile-empty">No picks recorded {label}.</div>;
+      if (tab === 'season') {
+        return <div className="Picks-profile-empty">No results recorded this season yet.</div>;
+      }
+      return <div className="Picks-profile-empty">No results recorded yet.</div>;
     }
 
     const wrongPicks = s.total_picks - s.correct_picks;
@@ -381,7 +383,7 @@ export default class UserPicksPage extends UserPage {
         {isExpanded && (
           <div className="Picks-season-body">
             {season.weeks.length === 0 ? (
-              <div className="Picks-profile-empty" style="padding: 1rem 1.1rem;">No week data for this season.</div>
+              <div className="Picks-profile-empty" style="padding: 1rem 1.1rem;">No results recorded this season yet.</div>
             ) : (
               <>
                 <table className="Picks-week-table">
