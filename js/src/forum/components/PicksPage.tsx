@@ -284,6 +284,10 @@ export default class PicksPage extends Page {
       body: { event_id: game.id, selected_outcome: outcome },
     }).then((r) => {
       if (game.my_pick) game.my_pick.id = r.pick_id;
+      // Increment picked count only when this is a new pick, not changing an existing one
+      if (prev === null) {
+        this.weeksMeta.picked = (this.weeksMeta.picked || 0) + 1;
+      }
       this.submitting[game.id] = false;
       m.redraw();
     }).catch(() => {
