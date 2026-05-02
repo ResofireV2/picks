@@ -56,7 +56,12 @@ class PublicStatsController implements RequestHandlerInterface
         $currentWeekNum  = $currentWeek?->week_number ?? null;
 
         // ── Participation ─────────────────────────────────────────────────────
-        $totalPlayers = Pick::distinct('user_id')->count('user_id');
+        // Total eligible players = all confirmed registered users.
+        // Using the users table so users who haven't picked yet are correctly
+        // included in the denominator rather than inflating the percentage.
+        $totalPlayers = DB::table('users')
+            ->where('is_email_confirmed', true)
+            ->count();
 
         $uniquePickersThisWeek = $currentWeekId
             ? Pick::whereHas('event', fn ($q) => $q->where('week_id', $currentWeekId))
